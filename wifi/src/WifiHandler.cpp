@@ -63,6 +63,7 @@ void WifiHandler::init(IPAddress ip, IPAddress gateway, IPAddress subnet,
   _wifiPassword = wifiPassword;
   _targetState = DISCONNECTED; 
   _currentState = DISCONNECTED;
+
   _server = WiFiServer(serverPort);
   WiFi.onEvent(onWiFiEvent);
   }
@@ -88,6 +89,10 @@ void WifiHandler::loop(){
       WiFi.disconnect();    // to be on the safe side
       WiFi.config(_ip, _gateway, _subnet);  // set specific ip...
       WiFi.begin(_ssid, _wifiPassword);     // connect to router
+      while (WiFi.status() != WL_CONNECTED) {
+        delay(500);
+        Serial.print(".");
+      } 
       break;
 
     case CONNECTED:
