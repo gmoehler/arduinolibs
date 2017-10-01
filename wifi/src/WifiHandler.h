@@ -4,6 +4,7 @@
 #include <WiFi.h>
 
 enum WifiState {  DISCONNECTED,
+                  CONNECTING,
                   CONNECTED,
                   CONNECTED_WITH_IP,
                   SERVER_LISTENING,
@@ -25,6 +26,7 @@ public:
 private:
   static WifiState _targetState;
   static WifiState _currentState;
+  static WifiState _nextState;
 
   static WiFiServer _server;
 

@@ -3,6 +3,8 @@
 // initialize static members
 WifiState WifiHandler::_targetState = DISCONNECTED;
 WifiState WifiHandler::_currentState = DISCONNECTED;
+WifiState WifiHandler::_nextState = DISCONNECTED;
+
 WiFiServer WifiHandler::_server;
 
 IPAddress WifiHandler::_ip; 
@@ -17,34 +19,31 @@ void WifiHandler::onWiFiEvent(WiFiEvent_t event)
   switch (event) {
     case SYSTEM_EVENT_WIFI_READY:
       printf("Wifi ready.\n");
-      _currentState = DISCONNECTED;
-      break;
-    case SYSTEM_EVENT_SCAN_DONE:
-      printf("Wifi scan done.\n");
+      _nextState = CONNECTING;
       break;
     case SYSTEM_EVENT_STA_START:
       printf("Wifi started...\n");
-      _currentState = DISCONNECTED;
+      _nextState = CONNECTING;
       break;
     case SYSTEM_EVENT_STA_STOP:
       printf("Wifi disconnected.\n");
-      _currentState = DISCONNECTED;
+      _nextState = DISCONNECTED;
       break;
     case SYSTEM_EVENT_STA_CONNECTED:
       printf("Wifi connected.\n");
-      _currentState = CONNECTED;
+      _nextState = CONNECTED;
       break;
     case SYSTEM_EVENT_STA_AUTHMODE_CHANGE:
       printf("Authmode of Access Point has changed.\n");
-      _currentState = DISCONNECTED;
+      _nextState = DISCONNECTED;
       break;
     case SYSTEM_EVENT_STA_GOT_IP:
       printf("IP address: %s\n", WiFi.localIP().toString().c_str());
-      _currentState = CONNECTED_WITH_IP;
+      _nextState = CONNECTED_WITH_IP;
       break;
     case SYSTEM_EVENT_STA_DISCONNECTED:
       printf("WiFi lost connection.\n");
-      _currentState = DISCONNECTED;
+      _nextState = DISCONNECTED;
       break;
     default:
       printf("[WiFi-event] Unhandled event: %d\n", event);
@@ -89,16 +88,21 @@ void WifiHandler::loop(){
       WiFi.disconnect();    // to be on the safe side
       WiFi.config(_ip, _gateway, _subnet);  // set specific ip...
       WiFi.begin(_ssid, _wifiPassword);     // connect to router
-      while (WiFi.status() != WL_CONNECTED) {
+      /*while (WiFi.status() != WL_CONNECTED) {
         delay(500);
         Serial.print(".");
-      } 
+      } */
+      _currentState = CONNECTING;
+      break;
+
+    case CONNECTING:
+
       break;
 
     case CONNECTED:
-
+      
       break;
-
+          
     case CONNECTED_WITH_IP:
 
       break;
