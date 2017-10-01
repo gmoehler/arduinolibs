@@ -8,31 +8,34 @@ enum WifiState {  DISCONNECTED,
                   CONNECTED_WITH_IP,
                   SERVER_LISTENING,
                   CLIENT_CONNECTED,
-                  CLIENT_DATA_AVAILABLE
+                  DATA_AVAILABLE
 };
 
 class WifiHandler
 {
 public:
-  WifiHandler(IPAddress ip, IPAddress gateway, IPAddress subnet, 
+  static void init(IPAddress ip, IPAddress gateway, IPAddress subnet, 
     uint16_t serverPort, char* ssid, char* wifiPassword);
 
-  void setTargetState(WifiState targetState);
-  WifiState getState();
+  static void setTargetState(WifiState targetState);
+  static WifiState getState();
 
-  void loop();
+  static void loop();
 
 private:
-  WifiState _targetState;
-  WifiState _currentState;
+  static WifiState _targetState;
+  static WifiState _currentState;
 
-  IPAddress _ip; 
-  IPAddress _gateway; 
-  IPAddress _subnet; 
-  uint16_t _serverPort;
-  char* _ssid; 
-  char* _wifiPassword;
+  static WiFiServer _server;
 
+  static IPAddress _ip; 
+  static IPAddress _gateway; 
+  static IPAddress _subnet; 
+  static uint16_t _serverPort;
+  static char* _ssid; 
+  static char* _wifiPassword;
+
+  static void onWiFiEvent(WiFiEvent_t event);
 
 };
 
