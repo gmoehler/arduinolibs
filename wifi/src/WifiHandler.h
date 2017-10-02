@@ -4,9 +4,7 @@
 #include <WiFi.h>
 
 enum WifiState {  DISCONNECTED,
-                  CONNECTING,
                   CONNECTED,
-                  CONNECTED_WITH_IP,
                   SERVER_LISTENING,
                   CLIENT_CONNECTED,
                   DATA_AVAILABLE
@@ -24,11 +22,12 @@ public:
   static void loop();
 
 private:
-  static WifiState _targetState;
-  static WifiState _currentState;
-  static WifiState _nextState;
+  static WifiState _currentState; // current state
+  static WifiState _targetState;  // ultimate target
+  static WifiState _nextState;    // next state to reach
 
   static WiFiServer _server;
+  static WiFiClient _client;
 
   static IPAddress _ip; 
   static IPAddress _gateway; 
@@ -37,7 +36,10 @@ private:
   static char* _ssid; 
   static char* _wifiPassword;
 
-  static void onWiFiEvent(WiFiEvent_t event);
+  static WifiState _determineNextState();
+  static void _invokeAction();
+  static bool _checkState(WifiState state);
+  static void _printState(WifiState state);
 
 };
 

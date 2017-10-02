@@ -17,7 +17,7 @@ void setup()
 {
     Serial.begin(115200);
     WifiHandler::init(myIP, gateway, subnet, port, ssid, password);
-    WifiHandler::setTargetState(CONNECTED);
+    WifiHandler::setTargetState(DATA_AVAILABLE);
 }
 
 void loop()
