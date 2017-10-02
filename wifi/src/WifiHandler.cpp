@@ -155,10 +155,8 @@ bool WifiHandler::_checkState(WifiState state){
 
     case CLIENT_CONNECTED:
     if (!_client) {
-      //Serial.print("*");
       _client = _server.available();
     }
-    //Serial.print("-");
 
     return _client.connected();
 
