@@ -4,7 +4,7 @@
 /**
  * Robust wifi handler
  * 
- * Survives the following wifi situations:
+ * Can handle the following wifi situations:
  * - client connects
  * - client sends data
  * - client disconnects
