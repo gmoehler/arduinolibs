@@ -1,6 +1,21 @@
 #ifndef WIFI_HANDLER
 #define WIFI_HANDLER
 
+/**
+ * Robust wifi handler
+ * 
+ * Survives the following wifi situations:
+ * - client connects
+ * - client sends data
+ * - client disconnects
+ * - client is interrupted during transmission
+ * - wifi stops and is restarted when no client is connected
+ * - wifi stops and is restarted when client is connected (not tested yet)
+ * - wifi stops during client transmission (still issues with that)
+ * 
+ **/
+
+
 #include <WiFi.h>
 
 enum WifiState {  DISCONNECTED,
@@ -18,6 +33,7 @@ public:
 
   static void setTargetState(WifiState targetState);
   static WifiState getState();
+  static char readData();
 
   static void loop();
 
@@ -36,10 +52,12 @@ private:
   static char* _ssid; 
   static char* _wifiPassword;
 
-  static WifiState _determineNextState();
-  static void _invokeAction();
+  static WifiState _determineNextState(bool upward);
+  static void _invokeAction(bool upward);
   static bool _checkState(WifiState state);
   static void _printState(WifiState state);
+
+  static bool _errorSituation;
 
 };
 

@@ -23,4 +23,9 @@ void setup()
 void loop()
 {
     WifiHandler::loop();
+    if (WifiHandler::getState() == DATA_AVAILABLE) {
+        char c = WifiHandler::readData();           // read a byte, then
+        Serial.print(static_cast<uint8_t> (c));     // print it out the serial monitor
+        Serial.print(" ");                   
+    }
 }

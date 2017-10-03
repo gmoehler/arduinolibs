@@ -15,6 +15,8 @@ uint16_t WifiHandler::_serverPort;
 char* WifiHandler::_ssid; 
 char* WifiHandler::_wifiPassword;
 
+bool WifiHandler::_errorSituation = false;
+
 
 void WifiHandler::init(IPAddress ip, IPAddress gateway, IPAddress subnet, 
   uint16_t serverPort, char* ssid, char* wifiPassword) {
@@ -38,9 +40,13 @@ WifiState WifiHandler::getState() {
   return _currentState;
 }
 
-WifiState WifiHandler::_determineNextState(){
+char WifiHandler::readData(){
+  return _client.read();             // read a byte
+}
+
+WifiState WifiHandler::_determineNextState(bool upward){
   // currently we only go to the next in the chain (up or down)
-  if (_targetState > _currentState){
+  if (upward){
     switch(_currentState) {
       case DISCONNECTED:
       return CONNECTED;
@@ -58,31 +64,29 @@ WifiState WifiHandler::_determineNextState(){
       return _currentState;
     }
   }
-  else if (_targetState < _currentState){
-    switch(_currentState) {
-      case DATA_AVAILABLE:
-      return CLIENT_CONNECTED;
+  
+  // downward
+  switch(_currentState) {
+    case DATA_AVAILABLE:
+    return CLIENT_CONNECTED;
 
-      case CLIENT_CONNECTED:
-      return SERVER_LISTENING;
+    case CLIENT_CONNECTED:
+    return SERVER_LISTENING;
 
-      case SERVER_LISTENING:
-      return CONNECTED;
+    case SERVER_LISTENING:
+    return CONNECTED;
 
-      case CONNECTED:
-      return DISCONNECTED;
+    case CONNECTED:
+    return DISCONNECTED;
 
-      default: // should not happen
-      return _currentState;
-    }
+    default: // should not happen
+    return _currentState;
   }
-  return _currentState;
+
 }
 
-void WifiHandler::_invokeAction(){
-
-  // upward
-  if (_targetState > _currentState){
+void WifiHandler::_invokeAction(bool upward){
+  if (upward){
     // since we only hop by one state we only need to check the _nextState
     switch(_nextState) {
       case CONNECTED:
@@ -95,6 +99,7 @@ void WifiHandler::_invokeAction(){
 
       case SERVER_LISTENING:
       Serial.println("Starting server...");
+      delay(500);
       _server.begin();                      // bind and listen
       break;
 
@@ -115,6 +120,10 @@ void WifiHandler::_invokeAction(){
   // downward
   else {
     switch(_nextState) {
+      case CLIENT_CONNECTED:
+      Serial.println("Stop receiving data...");
+      break;                               
+
       case SERVER_LISTENING:
       Serial.println("Stop listening for clients...");
       _client.stop();
@@ -136,7 +145,7 @@ void WifiHandler::_invokeAction(){
   }
 }
 
-// check actions that happen asynchronously
+// check whether a state that happen asynchronously
 bool WifiHandler::_checkState(WifiState state){
 
   // printf("Checking for state %d\n", state);
@@ -147,21 +156,22 @@ bool WifiHandler::_checkState(WifiState state){
 
     case CONNECTED:
     Serial.print(".");
+    Serial.print(WiFi.status());
     delay(500);
     return (WiFi.status() == WL_CONNECTED);
           
     case SERVER_LISTENING:
-    return _server; // equals to is_listening()
+    // need to also check wifi status since server would not notice failing wifi
+    return (WiFi.status() == WL_CONNECTED) && _server; // equals to is_listening()
 
     case CLIENT_CONNECTED:
     if (!_client) {
       _client = _server.available();
     }
-
-    return _client.connected();
+    return  (WiFi.status() == WL_CONNECTED) && _client.connected();
 
     case DATA_AVAILABLE:
-    return _client.available();
+    return  (WiFi.status() == WL_CONNECTED) && _client.available();
 
     default: // unknown state
     return false;
@@ -200,34 +210,61 @@ void WifiHandler::_printState(WifiState state){
 
 void WifiHandler::loop(){
 
+  // always verify current state
   if (!_checkState(_currentState)){
-    printf("Checking failed for state ");
+    Serial.print("Checking failed for state ");
     _printState(_currentState);
-    // do something to recover
-    return;
+
+    // stepping one down was not enough
+    // go one step further
+    if (_errorSituation){
+      _currentState = _nextState;
+    }
+    _errorSituation = true;
+
+    // switch back one state
+    bool upward = false;
+    _nextState = _determineNextState(upward);
+    Serial.print("Next state: ");
+    _printState(_nextState);
+    _invokeAction(upward);
   }
+
   // Serial.print("Current state:");
   // _printState(_currentState);
 
-  if (_currentState == _targetState){
-    // target reached: nothing to be done here
-    return;
-  } 
-
   if (_currentState == _nextState){
-    // reached next state, need to decide on a new action
-    _nextState = _determineNextState();
+    // reached next state
+    if (_currentState == _targetState){
+      // target reached: nothing to be done here
+      return;
+    }   
+    // not target state: need to decide on a new action
+    bool upward = _targetState > _currentState;
+    _nextState = _determineNextState(upward);
     Serial.print("Next state: ");
     _printState(_nextState);
-    _invokeAction();
+    _invokeAction(upward);
+  }
+
+  // special handling when ssid is not available
+  // TODO: find a better place for this (additional state?)
+  if (_nextState == CONNECTED && 
+        (WiFi.status() == WL_NO_SSID_AVAIL || WiFi.status() == WL_DISCONNECTED)) {
+    // need to call WiFi.begin() again
+    _invokeAction(true);
   }
 
   if (_checkState(_nextState)){
     // reached next state
-    Serial.print("NEW state:");
+    Serial.print("NEW state:  ");
     _printState(_nextState);
     _currentState = _nextState;
-  }
+    _errorSituation = false;
+  } else [
+    // count retries and repeat action if it takes too long to succeed
+    // e.g. server does not start after wifi is just back and not stable yet
+  ]
 
   delay(100);
 }
