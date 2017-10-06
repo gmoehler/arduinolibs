@@ -13,18 +13,20 @@ IPAddress subnet(255, 255, 255, 0);
 
 uint16_t port = 1110;
 
+WifiHandler wifiHandler;
+
 void setup()
 {
     Serial.begin(115200);
-    WifiHandler::init(myIP, gateway, subnet, port, ssid, password);
-    WifiHandler::setTargetState(DATA_AVAILABLE);
+    wifiHandler.init(myIP, gateway, subnet, port, ssid, password);
+    wifiHandler.setTargetState(DATA_AVAILABLE);
 }
 
 void loop()
 {
-    WifiHandler::loop();
-    if (WifiHandler::getState() == DATA_AVAILABLE) {
-        char c = WifiHandler::readData();           // read a byte, then
+    wifiHandler.loop();
+    if (wifiHandler.getState() == DATA_AVAILABLE) {
+        char c = wifiHandler.readData();           // read a byte, then
         Serial.print(static_cast<uint8_t> (c));     // print it out the serial monitor
         Serial.print(" ");                   
     }

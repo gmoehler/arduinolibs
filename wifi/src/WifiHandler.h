@@ -28,51 +28,65 @@ enum WifiState {  DISCONNECTED,
 class Transition
 {
 public:
-  const WifiState from;
-  const WifiState to;
-  Transition(WifiState f, WifiState t):from(f), to(t){};
+  WifiState from;
+  WifiState to;
+  bool wasInvoked;
+  Transition(WifiState f, WifiState t):from(f), to(t), wasInvoked(false){};
   bool operator==(Transition& rhs)const {
     return rhs.from == this->from && rhs.to == this->to;
   }
+  Transition& operator=(const Transition& other) // copy assignment
+  {
+      if (this != &other) { // self-assignment check expected
+          this->from = other.from;
+          this->to = other.to;
+          this->wasInvoked = other.wasInvoked;
+      }
+      return *this;
+  }
+  bool needToPerformAction(){ return from != to;}
 };
 
 class WifiHandler
 {
 public:
-  static void init(IPAddress ip, IPAddress gateway, IPAddress subnet, 
+  WifiHandler();
+  void init(IPAddress ip, IPAddress gateway, IPAddress subnet, 
     uint16_t serverPort, char* ssid, char* wifiPassword);
 
-  static void setTargetState(WifiState targetState);
-  static WifiState getState();
-  static char readData();
+  void setTargetState(WifiState targetState);
+  WifiState getState();
+  char readData();
 
-  static void loop();
+  void loop();
 
 private:
-  static WifiState _currentState; // current state
-  static WifiState _targetState;  // ultimate target
-  static WifiState _nextState;    // next state to reach
+  Transition _currentTransition; 
+  WifiState _currentState; // current state
+  WifiState _targetState;  // ultimate target
 
-  static WiFiServer _server;
-  static WiFiClient _client;
+  WiFiServer _server;
+  WiFiClient _client;
 
-  static IPAddress _ip; 
-  static IPAddress _gateway; 
-  static IPAddress _subnet; 
-  static uint16_t _serverPort;
-  static char* _ssid; 
-  static char* _wifiPassword;
+  IPAddress _ip; 
+  IPAddress _gateway; 
+  IPAddress _subnet; 
+  uint16_t _serverPort;
+  char* _ssid; 
+  char* _wifiPassword;
 
-  static Transition _determineConnectTransition();
-  static WifiState _determineNextState(bool upward);
-  static void _invokeAction(Transition trans);
-  static bool _checkState(WifiState state, bool printStatus=false);
+  Transition _determineConnectTransition();
+  Transition _determineErrorTransition();
+  
+  void _invokeAction(Transition trans);
+  bool _transitionSuccessful(Transition trans);
+  bool _checkState(WifiState state, bool printStatus=false);
 
-  static void _printState(WifiState state);
-  static void _printWiFiState();
-  static void _printTransition(Transition trans);
+  void _printState(WifiState state);
+  void _printWiFiState();
+  void _printTransition(Transition trans);
 
-  static bool _errorSituation;
+  bool _errorSituation;
 
 };
 
