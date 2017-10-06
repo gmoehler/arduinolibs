@@ -15,7 +15,7 @@
  * 
  **/
 
-
+#include <utility>
 #include <WiFi.h>
 
 enum WifiState {  DISCONNECTED,
@@ -23,6 +23,17 @@ enum WifiState {  DISCONNECTED,
                   SERVER_LISTENING,
                   CLIENT_CONNECTED,
                   DATA_AVAILABLE
+};
+
+class Transition
+{
+public:
+  const WifiState from;
+  const WifiState to;
+  Transition(WifiState f, WifiState t):from(f), to(t){};
+  bool operator==(Transition& rhs)const {
+    return rhs.from == this->from && rhs.to == this->to;
+  }
 };
 
 class WifiHandler
@@ -52,10 +63,14 @@ private:
   static char* _ssid; 
   static char* _wifiPassword;
 
+  static Transition _determineConnectTransition();
   static WifiState _determineNextState(bool upward);
-  static void _invokeAction(bool upward);
-  static bool _checkState(WifiState state);
+  static void _invokeAction(Transition trans);
+  static bool _checkState(WifiState state, bool printStatus=false);
+
   static void _printState(WifiState state);
+  static void _printWiFiState();
+  static void _printTransition(Transition trans);
 
   static bool _errorSituation;
 
