@@ -237,27 +237,27 @@ void WifiHandler::_printWiFiState(){
   switch(wifiState){
 
     case WL_NO_SHIELD:
-    Serial.print("WL_NO_SHIELD.");
+    Serial.print("WL_NO_SHIELD");
     break;
 
     case WL_IDLE_STATUS:
-    Serial.print("WL_IDLE_STATUS.");
+    Serial.print("WL_IDLE_STATUS");
     break;
           
     case WL_NO_SSID_AVAIL:
-    Serial.print("WL_NO_SSID_AVAIL.");
+    Serial.print("WL_NO_SSID_AVAIL");
     break;
 
     case WL_SCAN_COMPLETED:
-    Serial.print("WL_SCAN_COMPLETED.");
+    Serial.print("WL_SCAN_COMPLETED");
     break;
 
     case WL_CONNECTED:
-    Serial.print("WL_CONNECTED.");
+    Serial.print("WL_CONNECTED");
     break;
 
     case WL_CONNECT_FAILED:
-    Serial.print("WL_CONNECT_FAILED.");
+    Serial.print("WL_CONNECT_FAILED");
     break;
 
     case WL_CONNECTION_LOST:
@@ -265,11 +265,11 @@ void WifiHandler::_printWiFiState(){
     break;
 
     case WL_DISCONNECTED:
-    Serial.print("WL_DISCONNECTED.");
+    Serial.print("WL_DISCONNECTED");
     break;
 
     default:
-    Serial.print("UNKNOWN WiFi STATE.");
+    Serial.print("UNKNOWN WiFi STATE");
     break;
   } 
 }
