@@ -78,7 +78,7 @@ private:
   Transition _determineConnectTransition();
   Transition _determineErrorTransition();
   
-  void _invokeAction(Transition trans);
+  void _invokeAction(Transition& trans);
   bool _transitionSuccessful(Transition trans);
   bool _checkState(WifiState state, bool printStatus=false);
 

@@ -72,11 +72,15 @@ Transition WifiHandler::_determineErrorTransition(){
   }
 }
 
-void WifiHandler::_invokeAction(Transition trans){
+void WifiHandler::_invokeAction(Transition& trans){
 
-  if (!trans.wasInvoked) {
+  if (trans.wasInvoked) {
+    // invoke only once
+    // Serial.println("Action was already invoked.");
+  }
+  else {
     if (!trans.needToPerformAction()){
-      Serial.println("No action in transition...");
+      // Serial.println("No action in transition...");
       // do nothing
     }
     // connecting...
@@ -124,11 +128,10 @@ void WifiHandler::_invokeAction(Transition trans){
       Serial.println(".");
     }
 
+    // invoke only once
     trans.wasInvoked = true;
   }
-  else {
-    Serial.print("Do nothing...");
-  }
+
 }
 
 bool WifiHandler::_transitionSuccessful(Transition trans){
@@ -190,27 +193,27 @@ void WifiHandler::_printState(WifiState state){
   switch(state){
     
     case DISCONNECTED:
-    Serial.print("DISCONNECTED.");
+    Serial.print("DISCONNECTED");
     break;
 
     case CONNECTED:
-    Serial.print("CONNECTED.");
+    Serial.print("CONNECTED");
     break;
           
     case SERVER_LISTENING:
-    Serial.print("SERVER_LISTENING.");
+    Serial.print("SERVER_LISTENING");
     break;
 
     case CLIENT_CONNECTED:
-    Serial.print("CLIENT_CONNECTED.");
+    Serial.print("CLIENT_CONNECTED");
     break;
 
     case DATA_AVAILABLE:
-    Serial.print("DATA_AVAILABLE.");
+    Serial.print("DATA_AVAILABLE");
     break;
 
     default:
-    Serial.print("UNKNOWN_STATE.");
+    Serial.print("UNKNOWN_STATE");
     break;
   } 
 }
@@ -301,8 +304,9 @@ void WifiHandler::loop(){
     }
     else {
       _currentTransition = _determineConnectTransition();
-      _printTransition(_currentTransition);
     }
+    Serial.print("NEW Transition: ");
+    _printTransition(_currentTransition);
   }
 
   // only invoked once
