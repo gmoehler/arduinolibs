@@ -60,7 +60,9 @@ public:
   WifiState getState();
 
   char readData();  // read data (in state DATA_AVAILABLE)
-
+  size_t writeData(uint8_t data);                     // write (in state CLIENT_CONNECTED)
+  size_t writeData(const uint8_t *buf, size_t size);  // write (in state CLIENT_CONNECTED)
+ 
   void loop();      // to be called in loop()
 
 private:

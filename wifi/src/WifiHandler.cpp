@@ -32,6 +32,14 @@ char WifiHandler::readData(){
   return _client.read();             // read a byte
 }
 
+size_t WifiHandler::writeData(uint8_t data){
+  return _client.write(data);        // write data
+}
+
+size_t WifiHandler::writeData(const uint8_t *buf, size_t size){
+  return _client.write(buf, size);   // write data
+}
+
 Transition WifiHandler::_determineNextTransition(){
   switch(_currentState) {
     case DISCONNECTED:
