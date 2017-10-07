@@ -3,8 +3,7 @@
 WifiHandler::WifiHandler():
   _currentTransition(DISCONNECTED,DISCONNECTED),
   _targetState(DISCONNECTED),
-  _currentState(DISCONNECTED),
-  _errorSituation(false)
+  _currentState(DISCONNECTED)
 {};
 
 void WifiHandler::init(IPAddress ip, IPAddress gateway, IPAddress subnet, 
@@ -53,7 +52,7 @@ Transition WifiHandler::_determineConnectTransition(){
 
 }
 
-Transition WifiHandler::_determineErrorTransition(){
+Transition WifiHandler::_determineDisconnectTransition(){
   switch(_currentState) {
     case DATA_AVAILABLE:
     return Transition(DATA_AVAILABLE, CLIENT_CONNECTED);
@@ -79,7 +78,7 @@ void WifiHandler::_invokeAction(Transition& trans){
     // Serial.println("Action was already invoked.");
   }
   else {
-    if (!trans.needToPerformAction()){
+    if (!trans.withAction()){
       // Serial.println("No action in transition...");
       // do nothing
     }
@@ -107,6 +106,7 @@ void WifiHandler::_invokeAction(Transition& trans){
     // disconnecting...
     else if (Transition(DATA_AVAILABLE, CLIENT_CONNECTED) == trans){
       Serial.println("Stop receiving data...");
+      // nothing to be done
     }    
     else if (Transition(CLIENT_CONNECTED, SERVER_LISTENING) == trans){
       Serial.println("Disconnect clients...");
@@ -139,7 +139,7 @@ bool WifiHandler::_transitionSuccessful(Transition trans){
 }
 
 // check whether a state that happen asynchronously
-bool WifiHandler::_checkState(WifiState state, bool printStatus){
+bool WifiHandler::_checkState(WifiState state, bool debug){
 
   bool stateok = false;
   switch(state){
@@ -176,7 +176,7 @@ bool WifiHandler::_checkState(WifiState state, bool printStatus){
     break;
   } 
 
-  if (!stateok && printStatus) {
+  if (!stateok && debug) {
     Serial.print(">> WiFi state:");
     _printWiFiState();
     Serial.print(" Server:");
@@ -219,7 +219,7 @@ void WifiHandler::_printState(WifiState state){
 }
 
 void WifiHandler::_printTransition(Transition trans){
-  if (trans.needToPerformAction()) {
+  if (trans.withAction()) {
     _printState(trans.from);
     Serial.print(" --> ");
     _printState(trans.to);
@@ -279,39 +279,41 @@ void WifiHandler::loop(){
 
   // always verify current state
   if (!_checkState(_currentState)){
-    Serial.print("Checking failed for state ");
+    // current state has error
+    Serial.print("! Checking failed for state ");
     _printState(_currentState);
     Serial.println();
 
-    // stepping one down was not enough: one more step
-    if (_errorSituation){
-      _currentState = _currentTransition.to;
-    }
-    _errorSituation = true;
-
     // switch back one state
-    _currentTransition = _determineErrorTransition();
+    _currentTransition = _determineDisconnectTransition();
     _printTransition(_currentTransition);
+    _currentState = _currentTransition.to;
   }
 
   // check whether transition was successful
   else if (_transitionSuccessful(_currentTransition)) {
-    _errorSituation = false;
     _currentState = _currentTransition.to;
     if (_currentState == _targetState) { 
-      // no more transition
-      _currentTransition = Transition(_currentState,_currentState);
+      if (_currentTransition.withAction()) {
+        // no-action transition
+        _currentTransition = Transition(_currentState,_currentState);
+        Serial.println("> Target reached.");
+      }
+      // else: continue doing nothing
     }
     else {
       _currentTransition = _determineConnectTransition();
     }
-    Serial.print("NEW Transition: ");
-    _printTransition(_currentTransition);
+    if (_currentTransition.withAction()) {
+      Serial.println();
+      Serial.print("NEW Transition: ");
+      _printTransition(_currentTransition);
+    }
   }
 
   // only invoked once
   _invokeAction(_currentTransition);
 
-  delay(100);
+  // delay(100);
 }
 

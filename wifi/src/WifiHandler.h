@@ -5,13 +5,13 @@
  * Robust wifi handler
  * 
  * Can handle the following wifi situations:
- * - client connects
- * - client sends data
- * - client disconnects
- * - client is interrupted during transmission
- * - wifi stops and is restarted when no client is connected
- * - wifi stops and is restarted when client is connected (not tested yet)
- * - wifi stops during client transmission (still issues with that)
+ * 1. client connects
+ * 2. client sends data
+ * 3. client disconnects when idle
+ * 4. client is interrupted during transmission
+ * 5. wifi stops and is restarted when no client is connected
+ * 6. wifi stops and is restarted when client is connected (not tested yet)
+ * 7. wifi stops during client transmission (still issues with that)
  * 
  **/
 
@@ -44,7 +44,7 @@ public:
       }
       return *this;
   }
-  bool needToPerformAction(){ return from != to;}
+  bool withAction(){ return from != to;}
 };
 
 class WifiHandler
@@ -52,21 +52,19 @@ class WifiHandler
 public:
   WifiHandler();
   void init(IPAddress ip, IPAddress gateway, IPAddress subnet, 
-    uint16_t serverPort, char* ssid, char* wifiPassword);
+    uint16_t serverPort, char* ssid, char* wifiPassword); // to be called in setup()
 
   void setTargetState(WifiState targetState);
   WifiState getState();
-  char readData();
 
-  void loop();
+  char readData();  // read data (in state DATA_AVAILABLE)
+
+  void loop();      // to be called in loop()
 
 private:
-  Transition _currentTransition; 
+  Transition _currentTransition; // current state transition
   WifiState _currentState; // current state
   WifiState _targetState;  // ultimate target
-
-  WiFiServer _server;
-  WiFiClient _client;
 
   IPAddress _ip; 
   IPAddress _gateway; 
@@ -75,19 +73,19 @@ private:
   char* _ssid; 
   char* _wifiPassword;
 
+  WiFiServer _server;
+  WiFiClient _client;
+  
   Transition _determineConnectTransition();
-  Transition _determineErrorTransition();
+  Transition _determineDisconnectTransition();
   
   void _invokeAction(Transition& trans);
   bool _transitionSuccessful(Transition trans);
-  bool _checkState(WifiState state, bool printStatus=false);
+  bool _checkState(WifiState state, bool debug=false);
 
   void _printState(WifiState state);
   void _printWiFiState();
   void _printTransition(Transition trans);
-
-  bool _errorSituation;
-
 };
 
 #endif
