@@ -2,7 +2,7 @@
 #define WIFI_HANDLER
 
 /**
- * Robust wifi handler
+ * Robust server
  * 
  * Can handle the following wifi situations:
  * 1. client connects
@@ -10,8 +10,8 @@
  * 3. client disconnects when idle
  * 4. client is interrupted during transmission
  * 5. wifi stops and is restarted when no client is connected
- * 6. wifi stops and is restarted when client is connected (not tested yet)
- * 7. wifi stops during client transmission (still issues with that)
+ * 6. wifi stops and is restarted when client is connected 
+ * 7. wifi stops during client transmission 
  * 
  **/
 
@@ -19,6 +19,7 @@
 #include <WiFi.h>
 
 enum WifiState {  DISCONNECTED,
+                  ERR_SSID_NOT_AVAIL,
                   CONNECTED,
                   SERVER_LISTENING,
                   CLIENT_CONNECTED,
@@ -30,8 +31,8 @@ class Transition
 public:
   WifiState from;
   WifiState to;
-  bool wasInvoked;
-  Transition(WifiState f, WifiState t):from(f), to(t), wasInvoked(false){};
+  bool _invokeAction;
+  Transition(WifiState f, WifiState t):from(f), to(t), _invokeAction(true){};
   bool operator==(Transition& rhs)const {
     return rhs.from == this->from && rhs.to == this->to;
   }
@@ -40,11 +41,12 @@ public:
       if (this != &other) { // self-assignment check expected
           this->from = other.from;
           this->to = other.to;
-          this->wasInvoked = other.wasInvoked;
+          this->_invokeAction = other._invokeAction;
       }
       return *this;
   }
   bool withAction(){ return from != to;}
+  void setInvokeAction(bool ia) {_invokeAction = ia;}
 };
 
 class WifiHandler
@@ -80,12 +82,12 @@ private:
   Transition _determineDisconnectTransition();
   
   void _invokeAction(Transition& trans);
-  bool _transitionSuccessful(Transition trans);
+  bool _wasTransitionSuccessful(Transition trans);
   bool _checkState(WifiState state, bool debug=false);
 
-  void _printState(WifiState state);
-  void _printWiFiState();
-  void _printTransition(Transition trans);
+  void _printState(WifiState state, bool withPrintln=false);
+  void _printWiFiState( bool withPrintln=false);
+  void _printTransition(Transition trans, bool withPrintln=false);
 };
 
 #endif

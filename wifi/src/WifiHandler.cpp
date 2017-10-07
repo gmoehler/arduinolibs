@@ -37,6 +37,9 @@ Transition WifiHandler::_determineNextTransition(){
     case DISCONNECTED:
     return Transition(DISCONNECTED, CONNECTED);
 
+    case ERR_SSID_NOT_AVAIL:
+    return Transition(ERR_SSID_NOT_AVAIL, DISCONNECTED);
+
     case CONNECTED:
     return Transition(CONNECTED,SERVER_LISTENING);
 
@@ -46,7 +49,7 @@ Transition WifiHandler::_determineNextTransition(){
     case CLIENT_CONNECTED:
     return Transition(CLIENT_CONNECTED, DATA_AVAILABLE);
 
-    default: // should not happen
+    default: // no action when we are in DATA_AVAILABLE state
     return Transition(_currentState,_currentState);
   }
 
@@ -66,29 +69,28 @@ Transition WifiHandler::_determineDisconnectTransition(){
     case CONNECTED:
     return Transition(CONNECTED, DISCONNECTED);
 
-    default: // should not happen
+    default: // no action when we are in DISCONNECTED state
     return Transition( _currentState, _currentState);
   }
 }
 
 void WifiHandler::_invokeAction(Transition& trans){
 
-  if (trans.wasInvoked) {
-    // invoke only once
-    // Serial.println("Action was already invoked.");
-  }
-  else {
+  if (trans._invokeAction) {
     if (!trans.withAction()){
       // Serial.println("No action in transition...");
       // do nothing
     }
-    // connecting...
+    // connecting actions...
     else if (Transition(DISCONNECTED, CONNECTED) == trans){
       Serial.println("Connecting to Wifi...");
       WiFi.mode(WIFI_STA);                  // "station" mode
       WiFi.disconnect();                    // to be on the safe side
       WiFi.config(_ip, _gateway, _subnet);  // set specific ip...
       WiFi.begin(_ssid, _wifiPassword);     // connect to router
+    }
+    else if (Transition(ERR_SSID_NOT_AVAIL, DISCONNECTED) == trans){
+      // nothing to be done
     }
     else if (Transition(CONNECTED, SERVER_LISTENING) == trans){
       Serial.println("Starting server...");
@@ -103,7 +105,7 @@ void WifiHandler::_invokeAction(Transition& trans){
       Serial.println("Waiting for data...");
     } 
 
-    // disconnecting...
+    // disconnecting actions...
     else if (Transition(DATA_AVAILABLE, CLIENT_CONNECTED) == trans){
       Serial.println("Stop receiving data...");
       // nothing to be done
@@ -121,20 +123,30 @@ void WifiHandler::_invokeAction(Transition& trans){
       WiFi.disconnect();
     }
     else {
-      Serial.print("Error: Unknown transition requested: ");
+      Serial.print("! Error: Unknown transition requested: ");
       _printState(trans.from);
       Serial.print(" --> ");
       _printState(trans.to);
       Serial.println(".");
     }
 
-    // invoke only once
-    trans.wasInvoked = true;
+    // remember whether to invoke this action again
+    trans._invokeAction = false;
   }
-
 }
 
-bool WifiHandler::_transitionSuccessful(Transition trans){
+bool WifiHandler::_wasTransitionSuccessful(Transition trans){
+  if (Transition(ERR_SSID_NOT_AVAIL, DISCONNECTED) == trans){
+    Serial.println("Scanning SSIDs...");
+    int n = WiFi.scanNetworks();
+    for (int i = 0; i < n; ++i) {
+      if (WiFi.SSID(i).equals( _ssid)){
+        Serial.println("SSID found.");
+        return true;
+      }
+      return false;
+    }
+  }
   return _checkState(trans.to);
 }
 
@@ -145,12 +157,16 @@ bool WifiHandler::_checkState(WifiState state, bool debug){
   switch(state){
     
     case DISCONNECTED:
-    stateok = (WiFi.status() != WL_CONNECTED);
+    stateok = (WiFi.status() != WL_CONNECTED && WiFi.status() != WL_NO_SSID_AVAIL);
+    break;
+
+    case ERR_SSID_NOT_AVAIL:
+    stateok = (WiFi.status() == WL_NO_SSID_AVAIL);
     break;
 
     case CONNECTED:
     Serial.print(".");
-    _printWiFiState();
+    _printWiFiState(true);
     delay(500);
     stateok = (WiFi.status() == WL_CONNECTED);
     break;
@@ -177,7 +193,7 @@ bool WifiHandler::_checkState(WifiState state, bool debug){
   } 
 
   if (!stateok && debug) {
-    Serial.print(">> WiFi state:");
+    Serial.print(">> WiFi state: ");
     _printWiFiState();
     Serial.print(" Server:");
     Serial.print(_server ? "conn" : "nc");
@@ -189,123 +205,125 @@ bool WifiHandler::_checkState(WifiState state, bool debug){
   return stateok;
 }
 
-void WifiHandler::_printState(WifiState state){
+void WifiHandler::_printState(WifiState state, bool withPrintln){
   switch(state){
-    
     case DISCONNECTED:
     Serial.print("DISCONNECTED");
     break;
-
     case CONNECTED:
     Serial.print("CONNECTED");
     break;
-          
     case SERVER_LISTENING:
     Serial.print("SERVER_LISTENING");
     break;
-
     case CLIENT_CONNECTED:
     Serial.print("CLIENT_CONNECTED");
     break;
-
     case DATA_AVAILABLE:
     Serial.print("DATA_AVAILABLE");
     break;
-
     default:
     Serial.print("UNKNOWN_STATE");
     break;
   } 
+  if (withPrintln){
+    Serial.println();
+  }
 }
 
-void WifiHandler::_printTransition(Transition trans){
+void WifiHandler::_printTransition(Transition trans, bool withPrintln){
   if (trans.withAction()) {
     _printState(trans.from);
     Serial.print(" --> ");
     _printState(trans.to);
-    Serial.println(".");
   }
   else {
     Serial.print("No action");
   }
+  if (withPrintln){
+    Serial.println();
+  }
 }
 
-void WifiHandler::_printWiFiState(){
+void WifiHandler::_printWiFiState( bool withPrintln){
     
   wl_status_t wifiState = WiFi.status();
-  
-  switch(wifiState){
 
+  switch(wifiState){
     case WL_NO_SHIELD:
     Serial.print("WL_NO_SHIELD");
     break;
-
     case WL_IDLE_STATUS:
     Serial.print("WL_IDLE_STATUS");
-    break;
-          
+    break;    
     case WL_NO_SSID_AVAIL:
     Serial.print("WL_NO_SSID_AVAIL");
     break;
-
     case WL_SCAN_COMPLETED:
     Serial.print("WL_SCAN_COMPLETED");
     break;
-
     case WL_CONNECTED:
     Serial.print("WL_CONNECTED");
     break;
-
     case WL_CONNECT_FAILED:
     Serial.print("WL_CONNECT_FAILED");
     break;
-
     case WL_CONNECTION_LOST:
-    Serial.print("WL_CONNECTION_LOST.");
+    Serial.print("WL_CONNECTION_LOST");
     break;
-
     case WL_DISCONNECTED:
     Serial.print("WL_DISCONNECTED");
     break;
-
     default:
     Serial.print("UNKNOWN WiFi STATE");
     break;
   } 
+  if (withPrintln){
+    Serial.println();
+  }
 }
-
 
 void WifiHandler::loop(){
 
-  // always verify current state
-  if (!_checkState(_currentState)){
+  // always verify current state to detect errors
+  if (!_checkState(_currentState, true)
+      && !_checkState(_currentTransition.to, true)){
+
     // current state has error
     Serial.print("! Checking failed for state ");
-    _printState(_currentState);
-    Serial.println();
+    _printState(_currentState, true);
 
-    // switch back one state
-    _currentTransition = _determineDisconnectTransition();
-    _printTransition(_currentTransition);
-    _currentState = _currentTransition.to;
+    if (_currentState == DISCONNECTED && WiFi.status() == WL_NO_SSID_AVAIL){
+      _currentState = ERR_SSID_NOT_AVAIL;
+      _currentTransition = _determineNextTransition();
+      _printTransition(_currentTransition, true);
+      delay(1000);
+    }
+    else {
+      // switch back one state
+      _currentTransition = _determineDisconnectTransition();
+      _printTransition(_currentTransition, true);
+      _currentState = _currentTransition.to;
+      delay(200);
+      }
   }
 
   // check whether transition was successful
   else if (_currentTransition.withAction() 
-            && _transitionSuccessful(_currentTransition)) {
+            && _wasTransitionSuccessful(_currentTransition)) {
     _currentState = _currentTransition.to;
     if (_currentState == _targetState) { 
         // no-action transition
         _currentTransition = Transition(_currentState,_currentState);
-        Serial.println("> Target reached:");
-        _printState(_targetState);
+        Serial.print("> Target reached: ");
+        _printState(_targetState, true);
       }
     else {
       _currentTransition = _determineNextTransition();
     }
     Serial.println();
     Serial.print("NEW Transition: ");
-    _printTransition(_currentTransition);
+    _printTransition(_currentTransition, true);
   }
 
   // was in target state (with no action), but target has changed (also initially)
@@ -314,10 +332,10 @@ void WifiHandler::loop(){
     _currentTransition = _determineNextTransition(); 
     Serial.println();
     Serial.print("NEW Transition: ");
-    _printTransition(_currentTransition);
+    _printTransition(_currentTransition, true);
   }
 
-  // only invoked once
+  // some actions are only invoked once
   _invokeAction(_currentTransition);
 
   // delay(100);
