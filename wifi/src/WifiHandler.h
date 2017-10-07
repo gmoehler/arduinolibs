@@ -76,7 +76,7 @@ private:
   WiFiServer _server;
   WiFiClient _client;
   
-  Transition _determineConnectTransition();
+  Transition _determineNextTransition();
   Transition _determineDisconnectTransition();
   
   void _invokeAction(Transition& trans);

@@ -32,7 +32,7 @@ char WifiHandler::readData(){
   return _client.read();             // read a byte
 }
 
-Transition WifiHandler::_determineConnectTransition(){
+Transition WifiHandler::_determineNextTransition(){
   switch(_currentState) {
     case DISCONNECTED:
     return Transition(DISCONNECTED, CONNECTED);
@@ -291,24 +291,30 @@ void WifiHandler::loop(){
   }
 
   // check whether transition was successful
-  else if (_transitionSuccessful(_currentTransition)) {
+  else if (_currentTransition.withAction() 
+            && _transitionSuccessful(_currentTransition)) {
     _currentState = _currentTransition.to;
     if (_currentState == _targetState) { 
-      if (_currentTransition.withAction()) {
         // no-action transition
         _currentTransition = Transition(_currentState,_currentState);
-        Serial.println("> Target reached.");
+        Serial.println("> Target reached:");
+        _printState(_targetState);
       }
-      // else: continue doing nothing
-    }
     else {
-      _currentTransition = _determineConnectTransition();
+      _currentTransition = _determineNextTransition();
     }
-    if (_currentTransition.withAction()) {
-      Serial.println();
-      Serial.print("NEW Transition: ");
-      _printTransition(_currentTransition);
-    }
+    Serial.println();
+    Serial.print("NEW Transition: ");
+    _printTransition(_currentTransition);
+  }
+
+  // was in target state (with no action), but target has changed (also initially)
+  else if (!_currentTransition.withAction() 
+            && _currentState != _targetState) {
+    _currentTransition = _determineNextTransition(); 
+    Serial.println();
+    Serial.print("NEW Transition: ");
+    _printTransition(_currentTransition);
   }
 
   // only invoked once
