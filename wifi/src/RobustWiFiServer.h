@@ -17,52 +17,17 @@
 
 #include <utility>
 #include <WiFi.h>
+#include "wifi_utils.h"
 
-enum WifiState {  DISCONNECTED,
-                  ERR_SSID_NOT_AVAIL,
-                  CONNECTED,
-                  SERVER_LISTENING,
-                  CLIENT_CONNECTED,
-                  DATA_AVAILABLE
-};
-
-class Transition
-{ 
-public:
-  WifiState from;
-  WifiState to;
-  bool _invokeAction;
-  uint32_t _lastInvocationTime;
-  Transition(WifiState f, WifiState t):
-	from(f), to(t), _invokeAction(true), _lastInvocationTime(0){};
-  bool operator==(Transition& rhs)const {
-    return rhs.from == this->from && rhs.to == this->to;
-  }
-  Transition& operator=(const Transition& other) // copy assignment
-  {
-      if (this != &other) { // self-assignment check expected
-          this->from = other.from;
-          this->to = other.to;
-          this->_invokeAction = other._invokeAction;
-          this->_lastInvocationTime = other._lastInvocationTime;
-      }
-      return *this;
-  }
-  bool withAction(){ return from != to;}
-  void setInvokeAction(bool ia) {_invokeAction = ia;}
-  void setLastInvocationTime() {_lastInvocationTime = millis();}
-  uint32_t getLastInvocationTime() { return _lastInvocationTime;}
-};
-
-class WifiHandler
+class RobustWiFiServer
 {
 public:
-  WifiHandler();
+  RobustWiFiServer();
   void init(IPAddress ip, IPAddress gateway, IPAddress subnet, 
     uint16_t serverPort, char* ssid, char* wifiPassword); // to be called in setup()
 
-  void setTargetState(WifiState targetState);
-  WifiState getState();
+  void setTargetState(ServerState targetState);
+  ServerState getState();
 
   char readData();  // read data (in state DATA_AVAILABLE)
   size_t writeData(uint8_t data);                     // write (in state CLIENT_CONNECTED)
@@ -72,8 +37,8 @@ public:
 
 private:
   Transition _currentTransition; // current state transition
-  WifiState _currentState; // current state
-  WifiState _targetState;  // ultimate target
+  ServerState _currentState; // current state
+  ServerState _targetState;  // ultimate target
 
   IPAddress _ip; 
   IPAddress _gateway; 
@@ -90,11 +55,8 @@ private:
   
   void _invokeAction(Transition& trans);
   bool _wasTransitionSuccessful(Transition trans);
-  bool _checkState(WifiState state, bool debug=false);
+  bool _checkState(ServerState state, bool debug=false);
 
-  void _printState(WifiState state, bool withPrintln=false);
-  void _printWiFiState( bool withPrintln=false);
-  void _printTransition(Transition trans, bool withPrintln=false);
 };
 
 #endif

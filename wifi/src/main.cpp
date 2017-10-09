@@ -2,7 +2,7 @@
     This sketch shows the Ethernet event usage
 */
 
-#include "WifiHandler.h"
+#include "RobustWiFiServer.h"
 
 char* ssid     = "MY_SSID";
 char* password = "my_password";
@@ -13,20 +13,20 @@ IPAddress subnet(255, 255, 255, 0);
 
 uint16_t port = 1110;
 
-WifiHandler wifiHandler;
+RobustWiFiServer wifiServer;
 
 void setup()
 {
     Serial.begin(115200);
-    wifiHandler.init(myIP, gateway, subnet, port, ssid, password);
-    wifiHandler.setTargetState(DATA_AVAILABLE);
+    wifiServer.init(myIP, gateway, subnet, port, ssid, password);
+    wifiServer.setTargetState(DATA_AVAILABLE);
 }
 
 void loop()
 {
-    wifiHandler.loop();
-    if (wifiHandler.getState() == DATA_AVAILABLE) {
-        char c = wifiHandler.readData();           // read a byte, then
+    wifiServer.loop();
+    if (wifiServer.getState() == DATA_AVAILABLE) {
+        char c = wifiServer.readData();           // read a byte, then
         Serial.print(static_cast<uint8_t> (c));     // print it out the serial monitor
         Serial.print(" ");                   
     }
