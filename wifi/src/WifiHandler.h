@@ -34,7 +34,7 @@ public:
   bool _invokeAction;
   uint32_t _lastInvocationTime;
   Transition(WifiState f, WifiState t):
-	from(f), to(t), _invokeAction(true), lastInvocationTime(0){};
+	from(f), to(t), _invokeAction(true), _lastInvocationTime(0){};
   bool operator==(Transition& rhs)const {
     return rhs.from == this->from && rhs.to == this->to;
   }
