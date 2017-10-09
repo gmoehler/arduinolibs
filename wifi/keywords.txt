@@ -1,0 +1,35 @@
+#######################################
+# Syntax Coloring Map For RobustWiFiServer
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+RobustWiFiServer	KEYWORD1
+ServerState KEYWORD1
+Transition KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+init	KEYWORD2
+setTargetState	KEYWORD2
+getState	KEYWORD2
+readData	KEYWORD2
+writeData	KEYWORD2
+loop	KEYWORD2
+withAction	KEYWORD2
+setInvokeAction	KEYWORD2
+setLastInvocationTime	KEYWORD2
+getLastInvocationTime	KEYWORD2
+
+#######################################
+# Instances (KEYWORD2)
+#######################################
+
+#######################################
+# Constants (LITERAL1)
+#######################################
+
