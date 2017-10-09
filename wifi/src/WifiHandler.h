@@ -27,12 +27,14 @@ enum WifiState {  DISCONNECTED,
 };
 
 class Transition
-{
+{ 
 public:
   WifiState from;
   WifiState to;
   bool _invokeAction;
-  Transition(WifiState f, WifiState t):from(f), to(t), _invokeAction(true){};
+  uint32_t _lastInvocationTime;
+  Transition(WifiState f, WifiState t):
+	from(f), to(t), _invokeAction(true), lastInvocationTime(0){};
   bool operator==(Transition& rhs)const {
     return rhs.from == this->from && rhs.to == this->to;
   }
@@ -42,11 +44,14 @@ public:
           this->from = other.from;
           this->to = other.to;
           this->_invokeAction = other._invokeAction;
+          this->_lastInvocationTime = other._lastInvocationTime;
       }
       return *this;
   }
   bool withAction(){ return from != to;}
   void setInvokeAction(bool ia) {_invokeAction = ia;}
+  void setLastInvocationTime() {_lastInvocationTime = millis();}
+  uint32_t getLastInvocationTime() { return _lastInvocationTime;}
 };
 
 class WifiHandler

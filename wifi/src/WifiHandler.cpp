@@ -138,6 +138,7 @@ void WifiHandler::_invokeAction(Transition& trans){
       Serial.println(".");
     }
 
+    trans.setLastInvocationTime();
     // invoke action only once
     trans._invokeAction = false;
   }
