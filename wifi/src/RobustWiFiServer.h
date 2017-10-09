@@ -17,6 +17,7 @@
 
 #include <utility>
 #include <WiFi.h>
+#include <WString.h>
 #include "wifi_utils.h"
 
 class RobustWiFiServer
@@ -24,7 +25,7 @@ class RobustWiFiServer
 public:
   RobustWiFiServer();
   void init(IPAddress ip, IPAddress gateway, IPAddress subnet, 
-    uint16_t serverPort, char* ssid, char* wifiPassword); // to be called in setup()
+    uint16_t serverPort, String ssid, String wifiPassword); // to be called in setup()
 
   void setTargetState(ServerState targetState);
   ServerState getState();
@@ -44,8 +45,8 @@ private:
   IPAddress _gateway; 
   IPAddress _subnet; 
   uint16_t _serverPort;
-  char* _ssid; 
-  char* _wifiPassword;
+  String _ssid; 
+  String _wifiPassword;
 
   WiFiServer _server;
   WiFiClient _client;

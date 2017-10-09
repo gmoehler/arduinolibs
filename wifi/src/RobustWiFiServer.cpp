@@ -7,7 +7,7 @@ RobustWiFiServer::RobustWiFiServer():
 {};
 
 void RobustWiFiServer::init(IPAddress ip, IPAddress gateway, IPAddress subnet, 
-  uint16_t serverPort, char* ssid, char* wifiPassword) {
+  uint16_t serverPort, String ssid, String wifiPassword) {
   _ip = ip;
   _gateway = gateway;
   _subnet = subnet;
@@ -95,7 +95,7 @@ void RobustWiFiServer::_invokeAction(Transition& trans){
       WiFi.mode(WIFI_STA);                  // "station" mode
       WiFi.disconnect();                    // to be on the safe side
       WiFi.config(_ip, _gateway, _subnet);  // set specific ip...
-      WiFi.begin(_ssid, _wifiPassword);     // connect to router
+      WiFi.begin(_ssid.c_str(), _wifiPassword.c_str());     // connect to router
     }
     else if (Transition(ERR_SSID_NOT_AVAIL, DISCONNECTED) == trans){
       // nothing to be done

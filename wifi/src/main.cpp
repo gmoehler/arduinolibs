@@ -4,8 +4,8 @@
 
 #include "RobustWiFiServer.h"
 
-char* ssid     = "MY_SSID";
-char* password = "my_password";
+const String ssid     = "MY_SSID";
+const String password = "my_password";
 
 IPAddress myIP(192,168,1,127);
 IPAddress gateway(192, 168, 1, 1);
