@@ -22,5 +22,14 @@ uint8_t constrain(uint8_t value, uint8_t lowerBound, uint8_t upperBound);
 
 void mock_increaseTime(uint32_t ms);
 
+class HardwareSerial
+{
+public:
+  size_t println(const char[]);
+  size_t println();
+  size_t print(const char[]);
+  size_t print();
+};
+extern HardwareSerial Serial;
 
 #endif

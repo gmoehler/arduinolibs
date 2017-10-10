@@ -2,9 +2,10 @@
 #define WIFI_UTILS
 
 #ifndef WITHIN_UNITTEST
-#include <WiFi.h>
+  #include <WiFi.h>
 #else
-
+  #include "../test/mock_Arduino.h"
+  #include "../test/mock_wifi.h"
 #endif
 enum ServerState {  DISCONNECTED,
   ERR_SSID_NOT_AVAIL,

@@ -19,6 +19,7 @@
 #ifndef WITHIN_UNITTEST
   #include <WiFi.h>
 #else
+  #include "../test/mock_Arduino.h"
   #include "../test/mock_wifi.h"
 #endif
 
