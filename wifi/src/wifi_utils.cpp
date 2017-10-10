@@ -1,4 +1,4 @@
-#include <WiFi.h>
+
 #include "wifi_utils.h"
 
 void printWiFiState( bool withPrintln){

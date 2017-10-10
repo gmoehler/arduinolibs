@@ -16,7 +16,12 @@
  **/
 
 #include <utility>
+#ifndef WITHIN_UNITTEST
 #include <WiFi.h>
+#else
+
+#endif
+
 #include "wifi_utils.h"
 
 class RobustWiFiServer
