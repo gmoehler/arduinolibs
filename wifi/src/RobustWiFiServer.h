@@ -16,8 +16,12 @@
  **/
 
 #include <utility>
-#include <WiFi.h>
-#include <WString.h>
+#ifndef WITHIN_UNITTEST
+  #include <WiFi.h>
+#else
+  #include "../test/mock_wifi.h"
+#endif
+
 #include "wifi_utils.h"
 
 class RobustWiFiServer

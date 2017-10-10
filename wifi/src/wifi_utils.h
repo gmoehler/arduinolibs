@@ -1,6 +1,11 @@
 #ifndef WIFI_UTILS
 #define WIFI_UTILS
 
+#ifndef WITHIN_UNITTEST
+#include <WiFi.h>
+#else
+
+#endif
 enum ServerState {  DISCONNECTED,
   ERR_SSID_NOT_AVAIL,
   CONNECTED,
