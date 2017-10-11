@@ -28,7 +28,7 @@ public:
 
 class WiFiClass {
 public:
-  wl_status_t begin();
+  wl_status_t begin(const char* ssid, const char* password);
   bool config(IPAddress local_ip, IPAddress gateway, IPAddress subnet);
   wl_status_t status();
   bool disconnect();
@@ -39,6 +39,33 @@ public:
 
 extern WiFiClass WiFi;
 
+class WiFiClient;
+
+class WiFiServer {
+public:
+  WiFiServer(uint16_t port=80);
+  void begin();
+  WiFiClient available();
+  void end();
+  operator bool(){return true;}
+};
+
+class WiFiClient
+{
+protected:
+    bool _connected;
+
+public:
+    WiFiClient *next;
+    WiFiClient();
+    int read();
+    size_t write(uint8_t data);
+    size_t write(const uint8_t *buf, size_t size);
+    void stop();
+    bool available();
+    bool connected();
+    operator bool(){return true;}
+};
 
 
 #endif

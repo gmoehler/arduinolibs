@@ -2,8 +2,8 @@
 
 RobustWiFiServer::RobustWiFiServer():
   _currentTransition(DISCONNECTED,DISCONNECTED),
-  _targetState(DISCONNECTED),
-  _currentState(DISCONNECTED)
+  _currentState(DISCONNECTED),
+    _targetState(DISCONNECTED)
 {};
 
 void RobustWiFiServer::init(IPAddress ip, IPAddress gateway, IPAddress subnet, 

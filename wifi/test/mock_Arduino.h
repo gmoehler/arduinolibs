@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <string>
 
 // functions mocking Arduino.h to be used
 
@@ -32,12 +33,15 @@ public:
 };
 extern HardwareSerial Serial;
 
+using namespace std;
+
 class String {
 public:
-  String(const char* cstr="") {strcpy(_buffer, cstr);};
-  char* c_str() {return _buffer;}
+  String(const char* cstr=""):_buffer(cstr){};
+  const char* c_str() {return _buffer.data();}
+  bool equals(String str){return _buffer == str.c_str();}
 private:
-  char*_buffer;
+  string _buffer;
 };
 
 #endif
