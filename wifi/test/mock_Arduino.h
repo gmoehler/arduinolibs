@@ -32,4 +32,12 @@ public:
 };
 extern HardwareSerial Serial;
 
+class String {
+public:
+  String(const char* cstr="") {strcpy(_buffer, cstr);};
+  char* c_str() {return _buffer;}
+private:
+  char*_buffer;
+};
+
 #endif
