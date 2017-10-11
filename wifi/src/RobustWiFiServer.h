@@ -26,6 +26,9 @@
 #include "wifi_utils.h"
 
 class RobustWiFiServer
+#ifndef WITHIN_UNITTEST
+friend class 
+#endif
 {
 public:
   RobustWiFiServer();
@@ -63,6 +66,11 @@ private:
   bool _wasTransitionSuccessful(Transition trans);
   bool _checkState(ServerState state, bool debug=false);
 
+#ifdef WITHIN_UNITTEST  
+public:  
+#endif
+  WiFiClient _getClient(){return _client;}
+  WiFiServer _getServer(){return _server;}
 };
 
 #endif

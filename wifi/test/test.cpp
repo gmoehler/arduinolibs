@@ -2,6 +2,69 @@
 #include <RobustWiFiServer.h>
 
 
+void prepareState(ServerState state, RobustWiFiServer rs) {
+  WiFiClient c = rs._getClient();
+  WiFiServer s = rs._getServer();
+
+  switch(state){
+    case DISCONNECTED:
+    WiFi.setStatus(WL_DISCONNECTED);
+    s.setAvailable(false);
+    s.setListening(false);
+    c.setAvailable(false);
+    c.setConnected(false);
+    break;
+
+    case ERR_SSID_NOT_AVAIL:
+    WiFi.setStatus(WL_NO_SSID_AVAIL);
+    s.setAvailable(false);
+    s.setListening(false);
+    c.setAvailable(false);
+    c.setConnected(false);
+    break;
+
+    case CONNECTED:
+    WiFi.setStatus(WL_CONNECTED);
+    s.setAvailable(false);
+    s.setListening(false);
+    c.setAvailable(false);
+    c.setConnected(false);
+    break;
+
+    case SERVER_LISTENING:
+    WiFi.setStatus(WL_CONNECTED);
+    s.setAvailable(false);
+    s.setListening(true);
+    c.setAvailable(false);
+    c.setConnected(false);
+    break;
+
+    case CLIENT_CONNECTED:
+    WiFi.setStatus(WL_CONNECTED);
+    s.setAvailable(true);
+    s.setListening(true);
+    c.setAvailable(false);
+    c.setConnected(true);
+    break;
+
+    case DATA_AVAILABLE:
+    WiFi.setStatus(WL_CONNECTED);
+    s.setAvailable(true);
+    s.setListening(true);
+    c.setAvailable(true);
+    c.setConnected(true);
+    break;
+    
+    default:
+    WiFi.setStatus(WL_DISCONNECTED);
+    s.setAvailable(false);
+    s.setListening(false);
+    c.setAvailable(false);
+    c.setConnected(false);
+    break;
+  }
+}
+
 TEST(StaticHandler, runthru){
   const String ssid     = "MY_SSID";
   const String password = "my_password";
@@ -16,9 +79,29 @@ TEST(StaticHandler, runthru){
 
   wifiServer.init(myIP, gateway, subnet, port, ssid, password);
   wifiServer.setTargetState(DATA_AVAILABLE);
+  prepareState(DISCONNECTED, wifiServer);
   EXPECT_EQ( wifiServer.getState(), DISCONNECTED);
 
   for (int i=0; i< 3; i++){
+
+    switch(i){
+      case 0:
+      prepareState(CONNECTED, wifiServer);
+      break;
+
+      case 1:
+      prepareState(SERVER_LISTENING, wifiServer);
+      break;
+
+      case 2:
+      prepareState(CLIENT_CONNECTED, wifiServer);
+      break;
+
+      case 3:
+      prepareState(DATA_AVAILABLE, wifiServer);
+      break;
+    }
+
     wifiServer.loop();
     ServerState state = wifiServer.getState();
     switch(i){
@@ -37,7 +120,6 @@ TEST(StaticHandler, runthru){
       case 3:
       EXPECT_EQ(state, DATA_AVAILABLE);
       break;
-
     }
     
   }
