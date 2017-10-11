@@ -9,9 +9,12 @@ IPAddress::IPAddress(){
 }
 
 /*********************************/
+WiFiClass::WiFiClass()
+  : _status(WL_DISCONNECTED) {
+  }
 
 wl_status_t WiFiClass::begin(const char* ssid, const char* password) {
-  return WL_DISCONNECTED;
+  return _status;
 }
 
 bool WiFiClass::config(IPAddress local_ip, IPAddress gateway, IPAddress subnet){
@@ -19,7 +22,7 @@ bool WiFiClass::config(IPAddress local_ip, IPAddress gateway, IPAddress subnet){
 }
 
 wl_status_t WiFiClass::status(){
-  return WL_CONNECTED;
+  return _status;
 }
 
 bool WiFiClass::disconnect(){
@@ -27,11 +30,11 @@ bool WiFiClass::disconnect(){
 }
 
 int WiFiClass::scanNetworks() {
-  return 1;
+  return _numSSIDs;
 }
 
 String WiFiClass::SSID(uint8_t) {
-  return String("myssid");
+  return _ssid;
 }
 
 void WiFiClass::mode(uint8_t m) {
@@ -39,7 +42,8 @@ void WiFiClass::mode(uint8_t m) {
 
 /*********************************/
 
-WiFiClient::WiFiClient(){
+WiFiClient::WiFiClient()
+  : _available(false), _connected(false){
 }
 int WiFiClient::read(){
   return 0;
@@ -53,29 +57,35 @@ size_t WiFiClient::write(const uint8_t *buf, size_t size){
 void WiFiClient::stop(){
 }
 bool WiFiClient::available(){
-  return true;
+  return _available;
 }
 bool WiFiClient::connected(){
-  return true;
+  return _connected;
 }
 WiFiClient::operator bool(){
-  return true;
+  return connected();
 }
 
 /*********************************/
 
-WiFiServer::WiFiServer(uint16_t port) {
+WiFiServer::WiFiServer(uint16_t port)
+  : _available(false), _listening(false) {
 }
 
 void WiFiServer::begin(){
 }
 
-WiFiClient WiFiServer::available() { 
-  return WiFiClient();
-}
 void WiFiServer::end() {
-
 }
+
+WiFiClient WiFiServer::available() { 
+  WiFiClient c;
+  if (_available){
+    c.setConnected(true);
+  }
+  return c;
+}
+
 WiFiServer::operator bool(){
-  return true;
+  return _listening;
 }

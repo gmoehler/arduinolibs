@@ -29,40 +29,62 @@ public:
 
 class WiFiClass {
 public:
+  WiFiClass();
   wl_status_t begin(const char* ssid, const char* password);
   bool config(IPAddress local_ip, IPAddress gateway, IPAddress subnet);
-  wl_status_t status();
   bool disconnect();
   int scanNetworks();
   String SSID(uint8_t); 
   void mode(uint8_t m);
+
+  wl_status_t status();
+
+  void setStatus(wl_status_t status){_status = status;}
+  void setNumSSIDs(int numSSIDs) {_numSSIDs = numSSIDs;}
+  void setSSID(String ssid) {_ssid = ssid;}
+private:
+  wl_status_t _status;
+  int _numSSIDs;
+  String _ssid;
 };
 
 extern WiFiClass WiFi;
 
 class WiFiClient
 {
-protected:
-    bool _connected;
-
 public:
-    WiFiClient();
-    int read();
-    size_t write(uint8_t data);
-    size_t write(const uint8_t *buf, size_t size) ;
-    void stop();
-    bool available();
-    bool connected();
-    operator bool();
+  WiFiClient();
+  int read();
+  size_t write(uint8_t data);
+  size_t write(const uint8_t *buf, size_t size) ;
+  
+  void stop();
+
+  bool available();
+  bool connected();
+  operator bool();
+
+  void setAvailable(bool avail){_available = avail;}
+  void setConnected(bool conn){_connected = conn;}
+private:
+  bool _available;
+  bool _connected;
 };
 
 class WiFiServer {
 public:
   WiFiServer(uint16_t port=80);
   void begin();
-  WiFiClient available() ;
   void end();
+  
+  WiFiClient available() ;
   operator bool();
+
+  void setAvailable(bool avail){_available = avail;}
+  void setListening(bool list){_listening = list;}
+private:
+  bool _available;
+  bool _listening;
 };
 
 #endif
