@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include "mock_Arduino.h"
 
 
 typedef enum {
@@ -33,22 +34,11 @@ public:
   wl_status_t status();
   bool disconnect();
   int scanNetworks();
-  String SSID(uint8_t);
+  String SSID(uint8_t); 
   void mode(uint8_t m);
 };
 
 extern WiFiClass WiFi;
-
-class WiFiClient;
-
-class WiFiServer {
-public:
-  WiFiServer(uint16_t port=80);
-  void begin();
-  WiFiClient available();
-  void end();
-  operator bool(){return true;}
-};
 
 class WiFiClient
 {
@@ -56,16 +46,23 @@ protected:
     bool _connected;
 
 public:
-    WiFiClient *next;
     WiFiClient();
     int read();
     size_t write(uint8_t data);
-    size_t write(const uint8_t *buf, size_t size);
+    size_t write(const uint8_t *buf, size_t size) ;
     void stop();
     bool available();
     bool connected();
-    operator bool(){return true;}
+    operator bool();
 };
 
+class WiFiServer {
+public:
+  WiFiServer(uint16_t port=80);
+  void begin();
+  WiFiClient available() ;
+  void end();
+  operator bool();
+};
 
 #endif

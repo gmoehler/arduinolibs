@@ -12,7 +12,7 @@
 #define HIGH 1
 
 unsigned long millis();
-void delay(unsigned long ms);
+void delay(uint32_t ms);
 
 void pinMode(int, int);
 int digitalRead(int pin);
@@ -37,9 +37,9 @@ using namespace std;
 
 class String {
 public:
-  String(const char* cstr=""):_buffer(cstr){};
-  const char* c_str() {return _buffer.data();}
-  bool equals(String str){return _buffer == str.c_str();}
+  String(const char* cstr="");
+  const char* c_str();
+  bool equals(String str);
 private:
   string _buffer;
 };

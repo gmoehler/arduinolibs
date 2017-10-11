@@ -33,3 +33,29 @@ uint8_t constrain(uint8_t value, uint8_t lowerBound, uint8_t upperBound){
   }
   return value;
 }
+
+String::String(const char* cstr)
+  :_buffer(cstr){};
+
+const char* String::c_str() {
+  return _buffer.data();
+}
+bool String::equals(String str){
+  return _buffer == str.c_str();
+}
+
+HardwareSerial Serial;
+
+size_t HardwareSerial::println(const char[]) {
+  return 0;
+}
+size_t HardwareSerial::println() {
+  return 0;
+}
+size_t HardwareSerial::print(const char[]) {
+  return 0;
+}
+size_t HardwareSerial::print() {
+  return 0;
+}
+

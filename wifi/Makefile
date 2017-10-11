@@ -40,7 +40,9 @@ INCDEP      := -I$(INCDIR) -I$(INCDIR2) -I$(TESTINCDIR) -I$(GOOGLETEST_DIR)/incl
 SOURCES      := $(SRCDIR)/wifi_utils.cpp \
 								$(SRCDIR)/RobustWiFiServer.cpp
 
-TESTSOURCES  := $(TESTDIR)/test.cpp 
+TESTSOURCES  := $(TESTDIR)/test.cpp \
+								$(TESTDIR)/mock_Arduino.cpp \
+								$(TESTDIR)/mock_wifi.cpp
 								
 EXSOURCES    :=
 
