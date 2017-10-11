@@ -7,7 +7,9 @@
   #include "../test/mock_Arduino.h"
   #include "../test/mock_wifi.h"
 #endif
-enum ServerState {  DISCONNECTED,
+
+enum ServerState {  
+  DISCONNECTED,
   ERR_SSID_NOT_AVAIL,
   CONNECTED,
   SERVER_LISTENING,

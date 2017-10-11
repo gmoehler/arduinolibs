@@ -8,15 +8,15 @@ IPAddress::IPAddress(uint8_t first_octet, uint8_t second_octet, uint8_t third_oc
 IPAddress::IPAddress(){
 }
 
+/*********************************/
 
 wl_status_t WiFiClass::begin(const char* ssid, const char* password) {
-  return WL_CONNECTED;
+  return WL_DISCONNECTED;
 }
 
 bool WiFiClass::config(IPAddress local_ip, IPAddress gateway, IPAddress subnet){
   return true;
 }
-
 
 wl_status_t WiFiClass::status(){
   return WL_CONNECTED;
@@ -36,6 +36,8 @@ String WiFiClass::SSID(uint8_t) {
 
 void WiFiClass::mode(uint8_t m) {
 }
+
+/*********************************/
 
 WiFiClient::WiFiClient(){
 }
@@ -59,6 +61,8 @@ bool WiFiClient::connected(){
 WiFiClient::operator bool(){
   return true;
 }
+
+/*********************************/
 
 WiFiServer::WiFiServer(uint16_t port) {
 }

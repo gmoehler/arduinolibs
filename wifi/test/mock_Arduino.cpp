@@ -46,16 +46,15 @@ bool String::equals(String str){
 
 HardwareSerial Serial;
 
-size_t HardwareSerial::println(const char[]) {
-  return 0;
+size_t HardwareSerial::print(const char str[]) {
+  return printf("%s", str);
+}
+size_t HardwareSerial::println(const char str[]) {
+  return printf("%s\n", str);
 }
 size_t HardwareSerial::println() {
-  return 0;
+  return printf("\n");
 }
-size_t HardwareSerial::print(const char[]) {
-  return 0;
-}
-size_t HardwareSerial::print() {
-  return 0;
-}
+
+
 

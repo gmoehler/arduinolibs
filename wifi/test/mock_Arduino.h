@@ -26,10 +26,9 @@ void mock_increaseTime(uint32_t ms);
 class HardwareSerial
 {
 public:
+  size_t print(const char[]);
   size_t println(const char[]);
   size_t println();
-  size_t print(const char[]);
-  size_t print();
 };
 extern HardwareSerial Serial;
 
