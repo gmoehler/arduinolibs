@@ -33,10 +33,11 @@ friend class
 public:
   RobustWiFiServer();
   void init(IPAddress ip, IPAddress gateway, IPAddress subnet, 
-    uint16_t serverPort, String ssid, String wifiPassword); // to be called in setup()
+  uint16_t serverPort, String ssid, String wifiPassword); // to be called in setup()
 
   void setTargetState(ServerState targetState);
   ServerState getState();
+  
 
   char readData();  // read data (in state DATA_AVAILABLE)
   size_t writeData(uint8_t data);                     // write (in state CLIENT_CONNECTED)
@@ -69,8 +70,9 @@ private:
 #ifdef WITHIN_UNITTEST  
 public:  
 #endif
-  WiFiClient _getClient(){return _client;}
-  WiFiServer _getServer(){return _server;}
+  WiFiClient& _getClient(){return _client;}
+  WiFiServer& _getServer(){return _server;}
+  void _printInternalState();
 };
 
 #endif

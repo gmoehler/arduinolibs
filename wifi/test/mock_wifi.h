@@ -66,6 +66,7 @@ public:
 
   void setAvailable(bool avail){_available = avail;}
   void setConnected(bool conn){_connected = conn;}
+  void printStatus();
 private:
   bool _available;
   bool _connected;
@@ -81,7 +82,8 @@ public:
   operator bool();
 
   void setAvailable(bool avail){_available = avail;}
-  void setListening(bool list){_listening = list;}
+  void setListening(bool listening){_listening = listening;}
+  void printStatus();
 private:
   bool _available;
   bool _listening;

@@ -2,7 +2,7 @@
 #include <RobustWiFiServer.h>
 
 
-void prepareState(ServerState state, RobustWiFiServer rs) {
+void prepareState(ServerState state, RobustWiFiServer& rs) {
   WiFiClient c = rs._getClient();
   WiFiServer s = rs._getServer();
 
@@ -63,6 +63,15 @@ void prepareState(ServerState state, RobustWiFiServer rs) {
     c.setConnected(false);
     break;
   }
+   s.printStatus();
+   c.printStatus();
+   printf("> ");
+   rs._printInternalState();
+   
+  WiFiClient c0 = rs._getClient();
+  WiFiServer s0 = rs._getServer();
+  s0.printStatus();
+  c0.printStatus();
 }
 
 TEST(StaticHandler, runthru){
@@ -82,42 +91,33 @@ TEST(StaticHandler, runthru){
   prepareState(DISCONNECTED, wifiServer);
   EXPECT_EQ( wifiServer.getState(), DISCONNECTED);
 
-  for (int i=0; i< 3; i++){
+  for (int i=0; i< 4; i++){
 
+    wifiServer.loop();
+    
+    ServerState state = wifiServer.getState();
     switch(i){
       case 0:
+      EXPECT_EQ(state, DISCONNECTED);
       prepareState(CONNECTED, wifiServer);
       break;
-
+    
       case 1:
+      EXPECT_EQ(state, CONNECTED);
       prepareState(SERVER_LISTENING, wifiServer);
       break;
 
       case 2:
+      EXPECT_EQ(state, SERVER_LISTENING);
       prepareState(CLIENT_CONNECTED, wifiServer);
       break;
 
       case 3:
+      EXPECT_EQ(state, CLIENT_CONNECTED);
       prepareState(DATA_AVAILABLE, wifiServer);
       break;
-    }
 
-    wifiServer.loop();
-    ServerState state = wifiServer.getState();
-    switch(i){
-      case 0:
-      EXPECT_EQ(state, CONNECTED);
-      break;
-
-      case 1:
-      EXPECT_EQ(state, SERVER_LISTENING);
-      break;
-
-      case 2:
-      EXPECT_EQ(state, CLIENT_CONNECTED);
-      break;
-
-      case 3:
+      case 4:
       EXPECT_EQ(state, DATA_AVAILABLE);
       break;
     }

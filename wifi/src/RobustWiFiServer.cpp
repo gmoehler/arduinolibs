@@ -203,18 +203,21 @@ bool RobustWiFiServer::_checkState(ServerState state, bool debug){
   } 
 
   if (!stateok && debug) {
-    Serial.print(">> WiFi state: ");
-    printWiFiState();
-    Serial.print(" Server:");
-    Serial.print(_server ? "conn" : "nc");
-    Serial.print(" Client:");
-    Serial.print(_client.connected() ? "conn" : "nc");
-    Serial.print(" Client data:");
-    Serial.println(_client.available() ? "avail" : "na");
+    _printInternalState();
   }
   return stateok;
 }
 
+void RobustWiFiServer::_printInternalState(){
+	Serial.print(">> WiFi state: ");
+    printWiFiState();
+    Serial.print(" Server:");
+    Serial.print(_server ? "conn " : "nc ");
+    Serial.print(_server.available() ? "avail" : "na");
+    Serial.print(" Client:");
+    Serial.print(_client.connected() ? "conn " : "nc " );
+    Serial.println(_client.available() ? "avail" : "na");
+}
 
 void RobustWiFiServer::loop(){
 

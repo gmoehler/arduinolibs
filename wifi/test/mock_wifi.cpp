@@ -66,6 +66,17 @@ WiFiClient::operator bool(){
   return connected();
 }
 
+void WiFiClient::printStatus(){
+  printf("Client:");
+  if( _connected){
+  	printf(" connected");
+  }
+  if( _available){
+  	printf(" data_avail");
+  }
+  printf("\n");
+}
+
 /*********************************/
 
 WiFiServer::WiFiServer(uint16_t port)
@@ -87,5 +98,18 @@ WiFiClient WiFiServer::available() {
 }
 
 WiFiServer::operator bool(){
+	//printf("server bool %d\n", _listening?1:0);
   return _listening;
 }
+
+void WiFiServer::printStatus(){
+  printf("Server:");
+  if( _listening){
+  	printf(" listening");
+  }
+  if( _available){
+  	printf(" client_avail");
+  }
+  printf("\n");
+}
+
