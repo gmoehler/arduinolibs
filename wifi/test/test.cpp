@@ -3,8 +3,8 @@
 
 
 void prepareState(ServerState state, RobustWiFiServer& rs) {
-  WiFiClient c = rs._getClient();
-  WiFiServer s = rs._getServer();
+  WiFiClient& c = rs._getClient();
+  WiFiServer& s = rs._getServer();
 
   switch(state){
     case DISCONNECTED:
@@ -63,15 +63,8 @@ void prepareState(ServerState state, RobustWiFiServer& rs) {
     c.setConnected(false);
     break;
   }
-   s.printStatus();
-   c.printStatus();
-   printf("> ");
+   printf("test>");
    rs._printInternalState();
-   
-  WiFiClient c0 = rs._getClient();
-  WiFiServer s0 = rs._getServer();
-  s0.printStatus();
-  c0.printStatus();
 }
 
 TEST(StaticHandler, runthru){

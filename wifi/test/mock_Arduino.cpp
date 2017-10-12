@@ -3,7 +3,7 @@
 uint32_t _testCurrentTime=0L;
 
 unsigned long millis() {
-  printf("millis() %d\n",_testCurrentTime );
+  printf("millis: %d\n",_testCurrentTime );
   return _testCurrentTime;
 }
 
@@ -12,7 +12,7 @@ void mock_increaseTime(uint32_t ms){
 }
 
 void delay(uint32_t ms) {
-  printf("Waiting for %d ms.", ms);
+  printf("delay:  %d \n", ms);
   mock_increaseTime(ms);
 }
 
