@@ -281,6 +281,8 @@ void RobustWiFiServer::loop(){
     Serial.print("NEW Transition: ");
     printTransition(_currentTransition, true);
   }
+
+  // we stayed too long in this state, repeat action
   else if (_timeoutReached()){
     Serial.println("Timeout reached. Will repeat last action.");
     // we first revert transition to be on the safe side
