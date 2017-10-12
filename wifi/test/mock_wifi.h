@@ -81,12 +81,15 @@ public:
   WiFiClient available() ;
   operator bool();
 
+  void clientConnected(bool cconn) {_available = cconn;}
+
   void setAvailable(bool avail){_available = avail;}
   void setListening(bool listening){_listening = listening;}
   void printStatus();
 private:
   bool _available;
   bool _listening;
+  WiFiClient _client;
 };
 
 #endif

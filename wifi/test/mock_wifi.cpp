@@ -14,6 +14,10 @@ WiFiClass::WiFiClass()
   }
 
 wl_status_t WiFiClass::begin(const char* ssid, const char* password) {
+  _ssid = String(ssid);
+  if (_status != WL_NO_SSID_AVAIL){
+    _status = WL_CONNECTED;
+  } // else ssid is not there
   return _status;
 }
 
@@ -26,6 +30,7 @@ wl_status_t WiFiClass::status(){
 }
 
 bool WiFiClass::disconnect(){
+  _status = WL_DISCONNECTED;
   return true;
 }
 
@@ -46,15 +51,17 @@ WiFiClient::WiFiClient()
   : _available(false), _connected(false){
 }
 int WiFiClient::read(){
-  return 0;
+  _available = false; // only read one byte
+  return 1;
 }
 size_t WiFiClient::write(uint8_t data){
-  return 0;
+  return 1;
 }
 size_t WiFiClient::write(const uint8_t *buf, size_t size){
-  return 0;
+  return 1;
 }
 void WiFiClient::stop(){
+  _connected = false;
 }
 bool WiFiClient::available(){
   return _available;
@@ -84,17 +91,18 @@ WiFiServer::WiFiServer(uint16_t port)
 }
 
 void WiFiServer::begin(){
+  _listening = true;
+  _available = false;
 }
 
 void WiFiServer::end() {
+  _listening = false;
+  _available = false;
 }
 
 WiFiClient WiFiServer::available() { 
-  WiFiClient c;
-  if (_available){
-    c.setConnected(true);
-  }
-  return c;
+  _client.setConnected(_available);
+  return _client;
 }
 
 WiFiServer::operator bool(){

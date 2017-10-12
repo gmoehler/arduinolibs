@@ -150,6 +150,7 @@ bool RobustWiFiServer::_wasTransitionSuccessful(Transition trans){
     Serial.println("Scanning SSIDs...");
     int n = WiFi.scanNetworks();
     for (int i = 0; i < n; ++i) {
+      Serial.println(WiFi.SSID(i).c_str());
       if (WiFi.SSID(i).equals( _ssid)){
         Serial.println("SSID found.");
         return true;
@@ -202,9 +203,9 @@ bool RobustWiFiServer::_checkState(ServerState state, bool debug){
     break;
   } 
 
-  if (!stateok && debug) {
+//  if (!stateok && debug) {
     _printInternalState();
-  }
+//  }
   return stateok;
 }
 

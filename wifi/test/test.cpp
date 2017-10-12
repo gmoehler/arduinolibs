@@ -63,19 +63,41 @@ void prepareState(ServerState state, RobustWiFiServer& rs) {
     c.setConnected(false);
     break;
   }
-   printf("test>");
+   printf("test");
    rs._printInternalState();
 }
 
-TEST(StaticHandler, runthru){
-  const String ssid     = "MY_SSID";
-  const String password = "my_password";
-  
-  IPAddress myIP(192,168,1,127);
-  IPAddress gateway(192, 168, 1, 1);
-  IPAddress subnet(255, 255, 255, 0);
-  
-  uint16_t port = 1110;
+void client_connect(RobustWiFiServer& rs) {
+  printf("test> client connects.\n");
+  prepareState(CLIENT_CONNECTED, rs);
+}
+
+void client_disconnects(RobustWiFiServer& rs) {
+  printf("test> client disconnects.\n");
+  prepareState(SERVER_LISTENING, rs);
+}
+
+void client_send_data(RobustWiFiServer& rs) {
+  printf("test> client sends data.\n");
+  prepareState(DATA_AVAILABLE, rs);
+}
+
+void wifi_disconnects(RobustWiFiServer& rs) {
+  printf("test> wifi disconnects.\n");
+  prepareState(ERR_SSID_NOT_AVAIL, rs);
+}
+
+
+const String ssid     = "MY_SSID";
+const String password = "my_password";
+
+IPAddress myIP(192,168,1,127);
+IPAddress gateway(192, 168, 1, 1);
+IPAddress subnet(255, 255, 255, 0);
+
+uint16_t port = 1110;
+
+TEST(StaticHandler, runthru_explicit_setting){
 
   RobustWiFiServer wifiServer;
 
@@ -84,7 +106,14 @@ TEST(StaticHandler, runthru){
   prepareState(DISCONNECTED, wifiServer);
   EXPECT_EQ( wifiServer.getState(), DISCONNECTED);
 
-  for (int i=0; i< 4; i++){
+  // protocol:
+  // connects ordinary
+  // client disconnects
+  // wifi breaks down
+  // wifi back
+  // connect ordinary
+  for (int i=0; i<=15; i++){
+    printf("%d\n", i);
 
     wifiServer.loop();
     
@@ -92,28 +121,61 @@ TEST(StaticHandler, runthru){
     switch(i){
       case 0:
       EXPECT_EQ(state, DISCONNECTED);
-      prepareState(CONNECTED, wifiServer);
+      //prepareState(CONNECTED, wifiServer);
       break;
     
       case 1:
       EXPECT_EQ(state, CONNECTED);
-      prepareState(SERVER_LISTENING, wifiServer);
+      //prepareState(SERVER_LISTENING, wifiServer);
       break;
 
       case 2:
       EXPECT_EQ(state, SERVER_LISTENING);
-      prepareState(CLIENT_CONNECTED, wifiServer);
+      client_connect(wifiServer);
       break;
 
       case 3:
       EXPECT_EQ(state, CLIENT_CONNECTED);
-      prepareState(DATA_AVAILABLE, wifiServer);
+      client_send_data(wifiServer);
       break;
 
       case 4:
       EXPECT_EQ(state, DATA_AVAILABLE);
+      client_disconnects(wifiServer);
       break;
-    }
-    
+
+      case 5:
+      EXPECT_EQ(state, CLIENT_CONNECTED);
+      wifi_disconnects(wifiServer);
+      break;
+
+      case 6:
+      case 7:
+      case 8:
+      case 9:
+      // will not allow that connect succeeds
+      wifi_disconnects(wifiServer);
+      break;
+
+      // needs 3 iterations back to disconnected
+      case 10:
+      case 11:
+      EXPECT_EQ(state, ERR_SSID_NOT_AVAIL);
+      WiFi.setNumSSIDs(0);
+      break;
+
+      case 12:
+      WiFi.setNumSSIDs(1);
+      break;
+
+      case 13:
+      EXPECT_EQ(state, DISCONNECTED);
+      break;
+
+      case 14:
+      EXPECT_EQ(state, CONNECTED);
+      break;
+
+    } 
   }
 }
