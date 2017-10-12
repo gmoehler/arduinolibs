@@ -37,7 +37,6 @@ public:
 
   void setTargetState(ServerState targetState);
   ServerState getState();
-  
 
   char readData();  // read data (in state DATA_AVAILABLE)
   size_t writeData(uint8_t data);                     // write (in state CLIENT_CONNECTED)
@@ -62,10 +61,12 @@ private:
   
   Transition _determineNextTransition();
   Transition _determineDisconnectTransition();
+  Transition _determineRevertTransition(Transition trans);
   
   void _invokeAction(Transition& trans);
   bool _wasTransitionSuccessful(Transition trans);
   bool _checkState(ServerState state, bool debug=false);
+  bool _timeoutReached();
 
 #ifdef WITHIN_UNITTEST  
 public:  

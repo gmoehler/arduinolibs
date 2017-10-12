@@ -97,7 +97,7 @@ IPAddress subnet(255, 255, 255, 0);
 
 uint16_t port = 1110;
 
-TEST(StaticHandler, runthru_explicit_setting){
+TEST(StaticHandler, runthruWithDisconnect){
 
   RobustWiFiServer wifiServer;
 
@@ -179,3 +179,39 @@ TEST(StaticHandler, runthru_explicit_setting){
     } 
   }
 }
+
+
+TEST(StaticHandler, runWithTimeout){
+  
+    RobustWiFiServer wifiServer;
+  
+    wifiServer.init(myIP, gateway, subnet, port, ssid, password);
+    wifiServer.setTargetState(DATA_AVAILABLE);
+    prepareState(DISCONNECTED, wifiServer);
+    EXPECT_EQ( wifiServer.getState(), DISCONNECTED);
+    WiFi.setNumSSIDs(0);
+
+
+    for (int i=0; i<=7; i++){
+      printf("%d\n", i);
+      mock_increaseTime(1000);
+  
+      wifiServer.loop();
+      // dont succeed server start
+      prepareState(DISCONNECTED, wifiServer);
+      
+      //ServerState state = wifiServer.getState();
+      switch(i){
+        case 4:
+        // here we revert transition
+        // TODO: find test condition
+        break;
+
+        case 5:
+        // here we repeat transition
+        // TODO: find test condition
+        break;
+      }
+    }
+    
+}  

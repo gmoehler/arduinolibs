@@ -60,7 +60,6 @@ Transition RobustWiFiServer::_determineNextTransition(){
     default: // no action when we are in DATA_AVAILABLE state
     return Transition(_currentState,_currentState);
   }
-
 }
 
 Transition RobustWiFiServer::_determineDisconnectTransition(){
@@ -80,6 +79,10 @@ Transition RobustWiFiServer::_determineDisconnectTransition(){
     default: // no action when we are in DISCONNECTED state
     return Transition( _currentState, _currentState);
   }
+}
+
+Transition RobustWiFiServer::_determineRevertTransition(Transition trans){
+  return Transition(trans.to, trans.from);
 }
 
 void RobustWiFiServer::_invokeAction(Transition& trans){
@@ -138,6 +141,7 @@ void RobustWiFiServer::_invokeAction(Transition& trans){
       Serial.println(".");
     }
 
+    // remember invocation time for timeout
     trans.setLastInvocationTime();
     // invoke action only once
     trans._invokeAction = false;
@@ -220,6 +224,11 @@ void RobustWiFiServer::_printInternalState(){
     Serial.println(_client.available() ? "avail" : "na");
 }
 
+bool RobustWiFiServer::_timeoutReached(){
+  uint32_t now = millis();
+  return (now - _currentTransition.getLastInvocationTime() > 5000);
+}
+
 void RobustWiFiServer::loop(){
 
   // always verify current state to detect errors
@@ -271,6 +280,10 @@ void RobustWiFiServer::loop(){
     Serial.println();
     Serial.print("NEW Transition: ");
     printTransition(_currentTransition, true);
+  }
+  else if (_timeoutReached()){
+    Serial.println("Timeout reached. Will repeat last action.");
+    _currentTransition = _determineRevertTransition(_currentTransition);
   }
 
   // some actions are only invoked once
