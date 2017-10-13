@@ -20,9 +20,13 @@ void RobustWiFiServer::init(IPAddress ip, IPAddress gateway, IPAddress subnet,
   _server = WiFiServer(serverPort);
   }
 
-void RobustWiFiServer::setTargetState(ServerState targetState){
-  _targetState = targetState;
-}
+ void RobustWiFiServer::connect(){
+	_targetState = DATA_AVAILABLE;
+  }
+  
+  void RobustWiFiServer:: disconnect(){
+	_targetState = DISCONNECTED;
+  }
 
 ServerState RobustWiFiServer::getState() {
   return _currentState;

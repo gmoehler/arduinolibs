@@ -35,7 +35,9 @@ public:
   void init(IPAddress ip, IPAddress gateway, IPAddress subnet, 
   uint16_t serverPort, String ssid, String wifiPassword); // to be called in setup()
 
-  void setTargetState(ServerState targetState);
+  void connect();
+  void disconnect();
+
   ServerState getState();
 
   char readData();  // read data (in state DATA_AVAILABLE)

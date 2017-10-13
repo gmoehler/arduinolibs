@@ -19,7 +19,7 @@ void setup()
 {
     Serial.begin(115200);
     wifiServer.init(myIP, gateway, subnet, port, ssid, password);
-    wifiServer.setTargetState(DATA_AVAILABLE);
+    wifiServer.connect();
 }
 
 void loop()

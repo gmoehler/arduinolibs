@@ -102,7 +102,7 @@ TEST(StaticHandler, runthruWithDisconnect){
   RobustWiFiServer wifiServer;
 
   wifiServer.init(myIP, gateway, subnet, port, ssid, password);
-  wifiServer.setTargetState(DATA_AVAILABLE);
+  wifiServer.connect();
   prepareState(DISCONNECTED, wifiServer);
   EXPECT_EQ( wifiServer.getState(), DISCONNECTED);
 
@@ -186,7 +186,7 @@ TEST(StaticHandler, runWithTimeout){
     RobustWiFiServer wifiServer;
   
     wifiServer.init(myIP, gateway, subnet, port, ssid, password);
-    wifiServer.setTargetState(DATA_AVAILABLE);
+    wifiServer.connect();
     prepareState(DISCONNECTED, wifiServer);
     EXPECT_EQ( wifiServer.getState(), DISCONNECTED);
     WiFi.setNumSSIDs(0);
