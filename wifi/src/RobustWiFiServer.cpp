@@ -3,7 +3,8 @@
 RobustWiFiServer::RobustWiFiServer():
   _currentTransition(DISCONNECTED,DISCONNECTED),
   _currentState(DISCONNECTED),
-    _targetState(DISCONNECTED)
+  _targetState(DISCONNECTED),
+  _condition(NO_ERROR)
 {};
 
 void RobustWiFiServer::init(IPAddress ip, IPAddress gateway, IPAddress subnet, 
@@ -30,6 +31,10 @@ void RobustWiFiServer::init(IPAddress ip, IPAddress gateway, IPAddress subnet,
 
 ServerState RobustWiFiServer::getState() {
   return _currentState;
+}
+
+ServerCondition RobustWiFiServer::getCondition(){
+  return _condition;
 }
 
 char RobustWiFiServer::readData(){
@@ -240,6 +245,7 @@ void RobustWiFiServer::loop(){
       && !_checkState(_currentTransition.to, true)){
 
     // current state has an error
+    _condition.error = STATE_CHECK_FAILED;
     Serial.print("ERROR. Checking failed for state ");
     printServerState(_currentState, true);
 
@@ -263,6 +269,7 @@ void RobustWiFiServer::loop(){
   else if (_currentTransition.withAction() 
         && _wasTransitionSuccessful(_currentTransition)) {
     _currentState = _currentTransition.to;
+    _condition.resetError();
     if (_currentState == _targetState) { 
         // create no-action transition
         _currentTransition = Transition(_currentState,_currentState);
@@ -280,6 +287,7 @@ void RobustWiFiServer::loop(){
   // was in target state (with no action), but target has changed (also initially)
   else if (!_currentTransition.withAction() 
          && _currentState != _targetState) {
+    _condition.resetError();
     _currentTransition = _determineNextTransition(); 
     Serial.println();
     Serial.print("NEW Transition: ");
@@ -288,6 +296,8 @@ void RobustWiFiServer::loop(){
 
   // we stayed too long in this state, repeat action
   else if (_timeoutReached()){
+    _condition.error = TRANSITION_TIMEOUT_REACHED;
+    _condition.numberOfTimeouts++;
     Serial.println("Timeout reached. Will repeat last action.");
     // we first revert transition to be on the safe side
     // next iteration will automatically repeat action then

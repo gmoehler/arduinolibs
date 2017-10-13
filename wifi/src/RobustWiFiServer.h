@@ -26,9 +26,6 @@
 #include "wifi_utils.h"
 
 class RobustWiFiServer
-#ifndef WITHIN_UNITTEST
-friend class 
-#endif
 {
 public:
   RobustWiFiServer();
@@ -39,6 +36,7 @@ public:
   void disconnect();
 
   ServerState getState();
+  ServerCondition getCondition();
 
   char readData();  // read data (in state DATA_AVAILABLE)
   size_t writeData(uint8_t data);                     // write (in state CLIENT_CONNECTED)
@@ -50,6 +48,7 @@ private:
   Transition _currentTransition; // current state transition
   ServerState _currentState; // current state
   ServerState _targetState;  // ultimate target
+  ServerCondition _condition;
 
   IPAddress _ip; 
   IPAddress _gateway; 
@@ -75,6 +74,7 @@ public:
 #endif
   WiFiClient& _getClient(){return _client;}
   WiFiServer& _getServer(){return _server;}
+  
   void _printInternalState();
 };
 
