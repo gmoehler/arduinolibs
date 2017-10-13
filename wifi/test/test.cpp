@@ -116,36 +116,43 @@ TEST(StaticHandler, runthruWithDisconnect){
     printf("%d\n", i);
 
     wifiServer.loop();
+    ServerCondition cond = wifiServer.getCondition();
     
     ServerState state = wifiServer.getState();
     switch(i){
       case 0:
       EXPECT_EQ(state, DISCONNECTED);
+      EXPECT_EQ(cond.error, NO_ERROR);
       //prepareState(CONNECTED, wifiServer);
       break;
     
       case 1:
       EXPECT_EQ(state, CONNECTED);
+      EXPECT_EQ(cond.error, NO_ERROR);
       //prepareState(SERVER_LISTENING, wifiServer);
       break;
 
       case 2:
       EXPECT_EQ(state, SERVER_LISTENING);
+      EXPECT_EQ(cond.error, NO_ERROR);
       client_connect(wifiServer);
       break;
 
       case 3:
       EXPECT_EQ(state, CLIENT_CONNECTED);
+      EXPECT_EQ(cond.error, NO_ERROR);
       client_send_data(wifiServer);
       break;
 
       case 4:
       EXPECT_EQ(state, DATA_AVAILABLE);
+      EXPECT_EQ(cond.error, NO_ERROR);
       client_disconnects(wifiServer);
       break;
 
       case 5:
       EXPECT_EQ(state, CLIENT_CONNECTED);
+      EXPECT_EQ(cond.error, STATE_CHECK_FAILED);
       wifi_disconnects(wifiServer);
       break;
 
@@ -155,12 +162,14 @@ TEST(StaticHandler, runthruWithDisconnect){
       case 9:
       // will not allow that connect succeeds
       wifi_disconnects(wifiServer);
+      EXPECT_EQ(cond.error, STATE_CHECK_FAILED);
       break;
 
       // needs 3 iterations back to disconnected
       case 10:
       case 11:
       EXPECT_EQ(state, ERR_SSID_NOT_AVAIL);
+      EXPECT_EQ(cond.error, STATE_CHECK_FAILED);
       WiFi.setNumSSIDs(0);
       break;
 
@@ -170,10 +179,12 @@ TEST(StaticHandler, runthruWithDisconnect){
 
       case 13:
       EXPECT_EQ(state, DISCONNECTED);
+      EXPECT_EQ(cond.error, NO_ERROR);
       break;
 
       case 14:
       EXPECT_EQ(state, CONNECTED);
+      EXPECT_EQ(cond.error, NO_ERROR);
       break;
 
     } 
@@ -207,11 +218,13 @@ TEST(StaticHandler, runWithTimeout){
         case 1:
         case 2:
         case 3:
+        EXPECT_EQ(cond.error, NO_ERROR);
         EXPECT_EQ(cond.numberOfTimeouts, 0);
         break;
 
         case 4:
         // timeout occured
+        EXPECT_EQ(cond.error, TRANSITION_TIMEOUT_REACHED);
         EXPECT_EQ(cond.numberOfTimeouts, 1);
         break;
 
