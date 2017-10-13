@@ -9,12 +9,27 @@
 #endif
 
 enum ServerState {  
-  DISCONNECTED,
-  ERR_SSID_NOT_AVAIL,
-  CONNECTED,
-  SERVER_LISTENING,
-  CLIENT_CONNECTED,
-  DATA_AVAILABLE
+  DISCONNECTED       = 0,
+  CONNECTED          = 1,
+  SERVER_LISTENING   = 2,
+  CLIENT_CONNECTED   = 3,
+  DATA_AVAILABLE     = 4,
+  ERR_SSID_NOT_AVAIL = 90,
+  UNKNOWN            = 99
+};
+
+enum ServerError {
+  NO_ERROR,
+  STATE_CHECK_FAILED,
+  TRANSITION_TIMEOUT_REACHED
+};
+
+class ServerCondition {
+public:
+  ServerError error;
+  uint8_t numberOfTimeouts;
+  ServerCondition(ServerError err);
+  void resetError();    
 };
 
 class Transition

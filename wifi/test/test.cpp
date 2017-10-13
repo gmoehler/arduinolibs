@@ -199,18 +199,22 @@ TEST(StaticHandler, runWithTimeout){
       wifiServer.loop();
       // dont succeed server start
       prepareState(DISCONNECTED, wifiServer);
-      
-      //ServerState state = wifiServer.getState();
+
+      ServerCondition cond = wifiServer.getCondition();
+
       switch(i){
-        case 4:
-        // here we revert transition
-        // TODO: find test condition
+        case 0:
+        case 1:
+        case 2:
+        case 3:
+        EXPECT_EQ(cond.numberOfTimeouts, 0);
         break;
 
-        case 5:
-        // here we repeat transition
-        // TODO: find test condition
+        case 4:
+        // timeout occured
+        EXPECT_EQ(cond.numberOfTimeouts, 1);
         break;
+
       }
     }
     

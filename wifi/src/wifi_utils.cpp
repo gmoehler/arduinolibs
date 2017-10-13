@@ -1,6 +1,16 @@
 
 #include "wifi_utils.h"
 
+ServerCondition::ServerCondition(ServerError err){
+  error = err;
+  numberOfTimeouts = 0;
+}
+
+void ServerCondition::resetError(){
+  error = NO_ERROR;
+  numberOfTimeouts = 0;
+}
+
 void printWiFiState( bool withPrintln){
   
   wl_status_t wifiState = WiFi.status();
