@@ -21,13 +21,15 @@ void RobustWiFiServer::init(IPAddress ip, IPAddress gateway, IPAddress subnet,
   _server = WiFiServer(serverPort);
   }
 
- void RobustWiFiServer::connect(){
-	_targetState = DATA_AVAILABLE;
-  }
+void RobustWiFiServer::connect(){
+  Serial.println("\nConnection request received...");
+  _targetState = DATA_AVAILABLE;
+}
   
-  void RobustWiFiServer:: disconnect(){
-	_targetState = DISCONNECTED;
-  }
+void RobustWiFiServer:: disconnect(){
+  Serial.println("\nDisconnect request received...");
+  _targetState = DISCONNECTED;
+}
 
 ServerState RobustWiFiServer::getState() {
   return _currentState;
@@ -50,6 +52,14 @@ size_t RobustWiFiServer::writeData(const uint8_t *buf, size_t size){
 }
 
 Transition RobustWiFiServer::_determineNextTransition(){
+  if (_targetState == DATA_AVAILABLE){
+    return _determineNextConnectTransition();
+  }
+  return _determineNextDisconnectTransition();
+}
+  
+
+Transition RobustWiFiServer::_determineNextConnectTransition(){
   switch(_currentState) {
     case DISCONNECTED:
     return Transition(DISCONNECTED, CONNECTED);
@@ -71,7 +81,7 @@ Transition RobustWiFiServer::_determineNextTransition(){
   }
 }
 
-Transition RobustWiFiServer::_determineDisconnectTransition(){
+Transition RobustWiFiServer::_determineNextDisconnectTransition(){
   switch(_currentState) {
     case DATA_AVAILABLE:
     return Transition(DATA_AVAILABLE, CLIENT_CONNECTED);
@@ -90,7 +100,7 @@ Transition RobustWiFiServer::_determineDisconnectTransition(){
   }
 }
 
-Transition RobustWiFiServer::_determineRevertTransition(Transition trans){
+Transition RobustWiFiServer::_getRevertTransition(Transition trans){
   return Transition(trans.to, trans.from);
 }
 
@@ -216,9 +226,9 @@ bool RobustWiFiServer::_checkState(ServerState state, bool debug){
     break;
   } 
 
-//  if (!stateok && debug) {
+  if (!stateok && debug) {
     _printInternalState();
-//  }
+  }
   return stateok;
 }
 
@@ -250,7 +260,7 @@ void RobustWiFiServer::loop(){
     printServerState(_currentState, true);
 
     if (_currentState == DISCONNECTED && WiFi.status() == WL_NO_SSID_AVAIL){
-      // for SSID not found we have a special state
+      // for SSID not found we have a special error state
       _currentState = ERR_SSID_NOT_AVAIL;
       _currentTransition = _determineNextTransition();
       printTransition(_currentTransition, true);
@@ -258,11 +268,11 @@ void RobustWiFiServer::loop(){
     }
     else {
       // switch back one state
-      _currentTransition = _determineDisconnectTransition();
+      _currentTransition = _determineNextDisconnectTransition();
       printTransition(_currentTransition, true);
       _currentState = _currentTransition.to;
       delay(200);
-      }
+    }
   }
 
   // check whether transition was successful
@@ -271,7 +281,7 @@ void RobustWiFiServer::loop(){
     _currentState = _currentTransition.to;
     _condition.resetError();
     if (_currentState == _targetState) { 
-        // create no-action transition
+        // target reached: create no-action transition
         _currentTransition = Transition(_currentState,_currentState);
         Serial.print("> Target reached: ");
         printServerState(_targetState, true);
@@ -284,7 +294,7 @@ void RobustWiFiServer::loop(){
     printTransition(_currentTransition, true);
   }
 
-  // was in target state (with no action), but target has changed (also initially)
+  // was in target state (with no action), but now have a different target
   else if (!_currentTransition.withAction() 
          && _currentState != _targetState) {
     _condition.resetError();
@@ -295,13 +305,13 @@ void RobustWiFiServer::loop(){
   }
 
   // we stayed too long in this state, repeat action
-  else if (_timeoutReached()){
+  else if (_currentTransition.withAction() && _timeoutReached()){
     _condition.error = TRANSITION_TIMEOUT_REACHED;
     _condition.numberOfTimeouts++;
     Serial.println("Timeout reached. Will repeat last action.");
     // we first revert transition to be on the safe side
     // next iteration will automatically repeat action then
-    _currentTransition = _determineRevertTransition(_currentTransition);
+    _currentTransition = _getRevertTransition(_currentTransition);
   }
 
   // some actions are only invoked once

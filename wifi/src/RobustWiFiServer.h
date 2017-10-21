@@ -61,8 +61,9 @@ private:
   WiFiClient _client;
   
   Transition _determineNextTransition();
-  Transition _determineDisconnectTransition();
-  Transition _determineRevertTransition(Transition trans);
+  Transition _determineNextConnectTransition();
+  Transition _determineNextDisconnectTransition();
+  Transition _getRevertTransition(Transition trans);
   
   void _invokeAction(Transition& trans);
   bool _wasTransitionSuccessful(Transition trans);

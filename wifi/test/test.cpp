@@ -97,7 +97,7 @@ IPAddress subnet(255, 255, 255, 0);
 
 uint16_t port = 1110;
 
-TEST(StaticHandler, runthruWithDisconnect){
+TEST(StaticHandler, runthruWithWifiDisconnect){
 
   RobustWiFiServer wifiServer;
 
@@ -191,6 +191,64 @@ TEST(StaticHandler, runthruWithDisconnect){
   }
 }
 
+TEST(StaticHandler, runthruWithWifiDisconnect){
+  
+    RobustWiFiServer wifiServer;
+  
+    wifiServer.init(myIP, gateway, subnet, port, ssid, password);
+    wifiServer.connect();
+    prepareState(DISCONNECTED, wifiServer);
+    EXPECT_EQ( wifiServer.getState(), DISCONNECTED);
+  
+    // protocol:
+    // connects ordinary
+    // client disconnects
+    // wifi breaks down
+    // wifi back
+    // connect ordinary
+    for (int i=0; i<=15; i++){
+      printf("%d\n", i);
+  
+      wifiServer.loop();
+      ServerCondition cond = wifiServer.getCondition();
+      
+      ServerState state = wifiServer.getState();
+      switch(i){
+        case 0:
+        EXPECT_EQ(state, DISCONNECTED);
+        EXPECT_EQ(cond.error, NO_ERROR);
+        //prepareState(CONNECTED, wifiServer);
+        break;
+      
+        case 1:
+        EXPECT_EQ(state, CONNECTED);
+        EXPECT_EQ(cond.error, NO_ERROR);
+        //prepareState(SERVER_LISTENING, wifiServer);
+        break;
+  
+        case 2:
+        EXPECT_EQ(state, SERVER_LISTENING);
+        EXPECT_EQ(cond.error, NO_ERROR);
+        client_connect(wifiServer);
+        break;
+  
+        case 3:
+        EXPECT_EQ(state, CLIENT_CONNECTED);
+        EXPECT_EQ(cond.error, NO_ERROR);
+        client_send_data(wifiServer);
+        break;
+
+        EXPECT_EQ(state, DATA_AVAILABLE);
+        EXPECT_EQ(cond.error, NO_ERROR);
+        wifiServer.connect();
+        break;
+  
+
+
+      }
+    }
+}
+  
 
 TEST(StaticHandler, runWithTimeout){
   
