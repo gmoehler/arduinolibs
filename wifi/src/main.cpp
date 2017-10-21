@@ -37,14 +37,14 @@ void loop()
     }
     else if (dataRead){
         delay(1000);
-        Serial.print("Now disconnecting...");
+        Serial.print("*** Now disconnecting... ***");
         wifiServer.disconnect();
         connecting = false;
         dataRead = false;
     }
     else if (!connecting && wifiServer.getState() == DISCONNECTED) {
         delay(1000);
-        Serial.print("Now connecting...");
+        Serial.print("*** Now connecting... ***");
         wifiServer.connect();
         connecting = true;
     }
