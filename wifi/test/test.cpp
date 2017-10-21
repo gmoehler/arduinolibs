@@ -191,7 +191,7 @@ TEST(StaticHandler, runthruWithWifiDisconnect){
   }
 }
 
-TEST(StaticHandler, runthruWithWifiDisconnect){
+TEST(StaticHandler, runthruWithConnectDisconnect){
   
     RobustWiFiServer wifiServer;
   
@@ -206,7 +206,7 @@ TEST(StaticHandler, runthruWithWifiDisconnect){
     // wifi breaks down
     // wifi back
     // connect ordinary
-    for (int i=0; i<=15; i++){
+    for (int i=0; i<=10; i++){
       printf("%d\n", i);
   
       wifiServer.loop();
@@ -238,11 +238,41 @@ TEST(StaticHandler, runthruWithWifiDisconnect){
         client_send_data(wifiServer);
         break;
 
+        case 4:
         EXPECT_EQ(state, DATA_AVAILABLE);
         EXPECT_EQ(cond.error, NO_ERROR);
-        wifiServer.connect();
+        wifiServer.disconnect();
         break;
   
+        case 5:
+        EXPECT_EQ(state, DATA_AVAILABLE);
+        EXPECT_EQ(cond.error, NO_ERROR);
+        break;
+  
+        case 6:
+        EXPECT_EQ(state, CLIENT_CONNECTED);
+        EXPECT_EQ(cond.error, NO_ERROR);
+        break;
+  
+        case 7:
+        EXPECT_EQ(state, SERVER_LISTENING);
+        EXPECT_EQ(cond.error, NO_ERROR);
+        break;
+
+        case 8:
+        EXPECT_EQ(state, CONNECTED);
+        EXPECT_EQ(cond.error, NO_ERROR);
+        break;
+
+        case 9:
+        EXPECT_EQ(state,DISCONNECTED);
+        EXPECT_EQ(cond.error, NO_ERROR);
+        break;
+
+        case 10:
+        EXPECT_EQ(state,DISCONNECTED);
+        EXPECT_EQ(cond.error, NO_ERROR);
+        break;
 
 
       }
