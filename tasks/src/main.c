@@ -52,27 +52,31 @@ static void IRAM_ATTR gpio_isr_handler(void* arg)
 
 static void gpio_task_example(void* arg)
 {
+  static button_evt_t prev_evt;
   static button_evt_t prev_evt_pressed;
   button_evt_t evt;
     for(;;) {
         if(xQueueReceive(gpio_evt_queue, &evt, portMAX_DELAY)) {
           printf("Button: %d ms, val: %d\n", evt.time, evt.level);
           printf("Button-prev: %d ms, val: %d\n", prev_evt_pressed.time, prev_evt_pressed.level);
+
           if (evt.level == 0){
               prev_evt_pressed = evt;
           }
-          int presstime = evt.time - prev_evt_pressed.time;
-          printf("Press time: %d ms\n", presstime );
+          if (evt.level == 1){
+            int presstime = evt.time - prev_evt_pressed.time;
+            printf("Press time: %d ms\n", presstime );
 
-          if (presstime < _debounceTicks) {
-            printf("--> NO CLICK\n");
-          }
-          else if (presstime < _longTicks) {
-            printf("--> CLICK\n");
-          }
-          else if (presstime >= _longTicks) {
-            printf("--> LONG CLICK\n");
-          }
+            if (presstime < _debounceTicks) {
+              printf("--> NO CLICK\n");
+            }
+            else if (presstime < _longTicks) {
+              printf("--> CLICK\n");
+            }
+            else if (presstime >= _longTicks) {
+              printf("--> LONG CLICK\n");
+            }
+         }
         }
     }
 }
