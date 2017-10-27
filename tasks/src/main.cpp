@@ -15,7 +15,7 @@
 
 /**
  * Brief:
- * Detect button clicks and longclicks.
+ * Detect button clicks and longclicks and send it to a queue.
  *
  * GPIO status:
  * GPIO0:  input, pulled up, interrupt from rising edge and falling edge
@@ -30,7 +30,7 @@
 #define ESP_INTR_FLAG_DEFAULT 0
 
 int _debounceTicks = 50;      // number of millisec that have to pass by before a click is assumed as safe.
-int _longTicks = 600;             // number of millisec that have to pass by before a long button press is detected.
+int _longTicks = 600;         // number of millisec that have to pass by before a long button press is detected.
 int _holdDownTicks = 2000;    // number of millisec after which we send a release
 
 typedef enum {
