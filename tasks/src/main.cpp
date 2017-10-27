@@ -13,6 +13,8 @@
 #include "driver/gpio.h"
 #include "Arduino.h"
 
+#include "button.h"
+
 /**
  * Brief:
  * Detect button clicks and longclicks and send it to a queue.
@@ -43,48 +45,7 @@ typedef enum {
 
 static xQueueHandle gpio_evt_queue = NULL;
 
-static void IRAM_ATTR gpio_isr_handler(void* arg)
-{
-  static uint32_t lastPressedTime = 0;
-
-  gpio_num_t gpioNum = (gpio_num_t) reinterpret_cast<int>(arg);
-  int level = gpio_get_level(gpioNum);
-  uint32_t now = xTaskGetTickCount() * portTICK_PERIOD_MS;
-  int pressDuration = now - lastPressedTime;
-
-  ButtonClickType click = BUTTON_NOCLICK;
- 
-  // determine type of click when button is released
-  if (level == 1 && lastPressedTime > 0){
-
-    if (pressDuration < _debounceTicks) {
-      click = BUTTON_NOCLICK;
-    }
-    else if (pressDuration < _longTicks) {
-      click = BUTTON_CLICK;
-    }
-    else if (pressDuration >= _holdDownTicks) {
-      click = BUTTON_RELEASE;
-    }
-    else if (pressDuration >= _longTicks) {
-      click = BUTTON_LONGCLICK;
-    }
-  } 
-
-  // remember time when button is pressed down
-  else if (level == 0){
-    lastPressedTime = now;
-  }
-
-  if (click != BUTTON_NOCLICK){
-    // clear press memory
-   lastPressedTime = 0;
-   // send out event
-   xQueueSendFromISR(gpio_evt_queue, &click, NULL);
-  }
-}
-
-static void gpio_task_example(void* arg)
+static void button_task_example(void* arg)
 {
   ButtonClickType newclick;
 
@@ -126,12 +87,12 @@ void setup()
     //create a queue to handle gpio event from isr
     gpio_evt_queue = xQueueCreate(10, sizeof(ButtonClickType));
     //start gpio task
-    xTaskCreate(gpio_task_example, "gpio_task_example", 2048, NULL, 10, NULL);
+    xTaskCreate(button_task_example, "button_task_example", 2048, NULL, 10, NULL);
 
     //install gpio isr service
     gpio_install_isr_service(ESP_INTR_FLAG_DEFAULT);
     //hook isr handler for specific gpio pin
-    gpio_isr_handler_add(GPIO_INPUT_IO_0, gpio_isr_handler, (void*) GPIO_INPUT_IO_0);
+    gpio_isr_handler_add(GPIO_INPUT_IO_0, button_isr_handler, (void*) GPIO_INPUT_IO_0);
 
 }
 
