@@ -3,7 +3,7 @@
 
 #include <Arduino.h>
 
-enum CommandType {
+enum PoiCommandType {
     NO_COMMAND,             // no command (default)
     BUTTON0_CLICK,          // button 0 was clicked
     BUTTON0_LONGCLICK,      // button 0 was clicked a long time
@@ -13,15 +13,18 @@ enum CommandType {
     PLAY_CMD                // a play command like "play frame 0 to 20" (either direct or in program)
 };
 
-class Command {
+class PoiCommand {
 public:
-    Command();
-    CommandType& getType();
-    void setType(CommandType type);
+    PoiCommand();
+    PoiCommandType& getType();
+    void setType(PoiCommandType type);
     bool isEmpty();
+    setArgs(uint8_t[6] args);
 private:
-    CommandType _type;       // the type of the command      
-    uint32_t _args[6];       // arguments of the command (for wifi commands)
+    PoiCommandType _type;   // the type of the command      
+    uint8_t _args[6];       // arguments of the command (for wifi commands)
 };
+
+extern xQueueHandle commandQueue;
 
 #endif

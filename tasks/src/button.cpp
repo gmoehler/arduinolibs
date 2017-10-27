@@ -14,7 +14,7 @@ void IRAM_ATTR buttonIsrHandler(void* arg)
   uint32_t now = xTaskGetTickCount() * portTICK_PERIOD_MS;
   int pressDuration = now - lastPressedTime;
 
-  Command cmd;
+  PoiCommand cmd;
  
   // determine type of click when button is released
   if (level == 1 && lastPressedTime > 0){

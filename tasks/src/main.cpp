@@ -12,7 +12,7 @@
 #include "freertos/task.h"
 #include "freertos/queue.h"
 
-#include "Command.h"
+#include "PoiCommand.h"
 #include "button.h"
 #include "wifi.h"
 
@@ -30,9 +30,10 @@
 
 xQueueHandle commandQueue = NULL;
 
-static void buttonTask(void* arg)
+// reads from command queue
+static void adminTask(void* arg)
 {
-  Command cmd;
+  PoiCommand cmd;
 
     for(;;) {
       if(xQueueReceive(commandQueue, &cmd, portMAX_DELAY)) {
@@ -58,9 +59,10 @@ void setup()
   buttonSetup();
 
   //create a queue to handle button commands from isr
-  commandQueue = xQueueCreate(10, sizeof(Command));
+  commandQueue = xQueueCreate(10, sizeof(PoiCommand));
   //start button task
-  xTaskCreate(buttonTask, "buttonTask", 2048, NULL, 10, NULL);
+  xTaskCreate(adminTask, "adminTask", 2048, NULL, 10, NULL);
+  xTaskCreate(wifiTask, "wifiTask", 2048, NULL, 10, NULL);
 
 }
 

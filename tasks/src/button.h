@@ -7,13 +7,11 @@
 #include "freertos/queue.h"
 #include "driver/gpio.h"
 
-#include "Command.h"
+#include "PoiCommand.h"
 
 #define GPIO_INPUT_IO_0       GPIO_NUM_0
 #define GPIO_INPUT_PIN_SEL    (1<<GPIO_INPUT_IO_0)
 #define ESP_INTR_FLAG_DEFAULT 0
-
-extern xQueueHandle commandQueue;
 
 void IRAM_ATTR buttonIsrHandler(void* arg);
 void buttonSetup();
