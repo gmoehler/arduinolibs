@@ -57,9 +57,9 @@ static void IRAM_ATTR gpio_isr_handler(void* arg)
   evt.time = xTaskGetTickCount() * portTICK_PERIOD_MS;
   evt.level = gpio_get_level(gpio_num);
 
-  ButtonClickType click;
+  ButtonClickType click = BUTTON_NOCLICK;
   // determine type of click
-  if (gpio_get_level(gpio_num) == 1){
+  if (evt.level == 1){
     int presstime = evt.time - prev_evt_pressed.time;
 
     if (presstime < _debounceTicks) {
@@ -75,7 +75,7 @@ static void IRAM_ATTR gpio_isr_handler(void* arg)
 
   // remember previous event and previous "pressed down" event
   // prev_evt = evt;
-  if (evt.level == 0){
+  else if (evt.level == 0){
     prev_evt_pressed = evt;
   }
 
