@@ -5,7 +5,7 @@ int _longTicks = 600;         // number of millisec that have to pass by before 
 int _holdDownTicks = 2000;    // number of millisec after which we send a release
 
 
-static void IRAM_ATTR button_isr_handler(void* arg)
+void IRAM_ATTR buttonIsrHandler(void* arg)
 {
   static uint32_t lastPressedTime = 0;
 
@@ -42,29 +42,27 @@ static void IRAM_ATTR button_isr_handler(void* arg)
     // clear press memory
    lastPressedTime = 0;
    // send out event
-   xQueueSendFromISR(gpio_evt_queue, &click, NULL);
+   xQueueSendFromISR(commandQueue, &click, NULL);
   }
 }
 
-void button_setup(){
-  gpio_config_t io_conf;
-  //interrupt of rising edge
-  io_conf.intr_type = GPIO_INTR_POSEDGE;
-  //bit mask of the pins, use GPIO0 here
-  io_conf.pin_bit_mask = GPIO_INPUT_PIN_SEL;
-  //set as input mode    
-  io_conf.mode = GPIO_MODE_INPUT;
-  //enable pull-up mode
-  io_conf.pull_up_en = GPIO_PULLUP_ENABLE;
-  gpio_config(&io_conf);
+void buttonSetup(){
+    gpio_config_t io_conf;
+    //interrupt of rising edge
+    io_conf.intr_type = GPIO_INTR_POSEDGE;
+    //bit mask of the pins, use GPIO0 here
+    io_conf.pin_bit_mask = GPIO_INPUT_PIN_SEL;
+    //set as input mode    
+    io_conf.mode = GPIO_MODE_INPUT;
+    //enable pull-up mode
+    io_conf.pull_up_en = GPIO_PULLUP_ENABLE;
+    gpio_config(&io_conf);
 
-  //change gpio intrrupt type for one pin
-  gpio_set_intr_type(GPIO_INPUT_IO_0, GPIO_INTR_ANYEDGE);
-}
+    //change gpio intrrupt type for one pin
+    gpio_set_intr_type(GPIO_INPUT_IO_0, GPIO_INTR_ANYEDGE);
 
-void button_setup2(){
-  //install gpio isr service
-  gpio_install_isr_service(ESP_INTR_FLAG_DEFAULT);
-  //hook isr handler for specific gpio pin
-  gpio_isr_handler_add(GPIO_INPUT_IO_0, button_isr_handler, (void*) GPIO_INPUT_IO_0);
+    //install gpio isr service
+    gpio_install_isr_service(ESP_INTR_FLAG_DEFAULT);
+    //hook isr handler for specific gpio pin
+    gpio_isr_handler_add(GPIO_INPUT_IO_0, buttonIsrHandler, (void*) GPIO_INPUT_IO_0);
 }

@@ -26,12 +26,14 @@
  *
  */
 
-static void button_task_example(void* arg)
+xQueueHandle commandQueue = NULL;
+
+static void buttonTask(void* arg)
 {
   ButtonClickType newclick;
 
     for(;;) {
-      if(xQueueReceive(gpio_evt_queue, &newclick, portMAX_DELAY)) {
+      if(xQueueReceive(commandQueue, &newclick, portMAX_DELAY)) {
 
       if (newclick == BUTTON_CLICK) {
         printf("--> CLICK\n");
@@ -51,14 +53,13 @@ static void button_task_example(void* arg)
 
 void setup()
 {
-  button_setup();
+  buttonSetup();
 
-  //create a queue to handle gpio event from isr
-  gpio_evt_queue = xQueueCreate(10, sizeof(ButtonClickType));
-  //start gpio task
-  xTaskCreate(button_task_example, "button_task_example", 2048, NULL, 10, NULL);
+    //create a queue to handle button commands from isr
+    commandQueue = xQueueCreate(10, sizeof(ButtonClickType));
+    //start button task
+    xTaskCreate(buttonTask, "buttonTask", 2048, NULL, 10, NULL);
 
-  button_setup2();
 }
 
 void loop(){
