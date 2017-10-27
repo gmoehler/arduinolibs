@@ -7,12 +7,14 @@
    CONDITIONS OF ANY KIND, either express or implied.
 */
 
+#include <Arduino.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/queue.h"
-#include "Arduino.h"
 
+#include "Command.h"
 #include "button.h"
+#include "wifi.h"
 
 /**
  * Brief:
@@ -30,22 +32,22 @@ xQueueHandle commandQueue = NULL;
 
 static void buttonTask(void* arg)
 {
-  ButtonClickType newclick;
+  Command cmd;
 
     for(;;) {
-      if(xQueueReceive(commandQueue, &newclick, portMAX_DELAY)) {
+      if(xQueueReceive(commandQueue, &cmd, portMAX_DELAY)) {
 
-      if (newclick == BUTTON_CLICK) {
+      if (cmd.getType() == BUTTON0_CLICK) {
         printf("--> CLICK\n");
       }
-      else if (newclick == BUTTON_LONGCLICK) {
+      else if (cmd.getType() == BUTTON0_LONGCLICK) {
         printf("--> LONG CLICK\n");
       }
-      else if (newclick == BUTTON_RELEASE) {
+      else if (cmd.getType() == BUTTON0_RELEASE) {
         printf("--> BUTTON RELEASED\n");
       }
       else {
-        printf("--> UNKNOWN BUTTON EVENT: %d\n", newclick);
+        printf("--> UNKNOWN BUTTON EVENT: %d\n", static_cast<int>(cmd.getType()));
       }
     }
   }
@@ -55,10 +57,10 @@ void setup()
 {
   buttonSetup();
 
-    //create a queue to handle button commands from isr
-    commandQueue = xQueueCreate(10, sizeof(ButtonClickType));
-    //start button task
-    xTaskCreate(buttonTask, "buttonTask", 2048, NULL, 10, NULL);
+  //create a queue to handle button commands from isr
+  commandQueue = xQueueCreate(10, sizeof(Command));
+  //start button task
+  xTaskCreate(buttonTask, "buttonTask", 2048, NULL, 10, NULL);
 
 }
 

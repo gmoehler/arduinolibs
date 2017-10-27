@@ -14,22 +14,20 @@ void IRAM_ATTR buttonIsrHandler(void* arg)
   uint32_t now = xTaskGetTickCount() * portTICK_PERIOD_MS;
   int pressDuration = now - lastPressedTime;
 
-  ButtonClickType click = BUTTON_NOCLICK;
+  Command cmd;
  
   // determine type of click when button is released
   if (level == 1 && lastPressedTime > 0){
 
-    if (pressDuration < _debounceTicks) {
-      click = BUTTON_NOCLICK;
-    }
-    else if (pressDuration < _longTicks) {
-      click = BUTTON_CLICK;
+    if (pressDuration >= _debounceTicks
+      && pressDuration < _longTicks) {
+      cmd.setType(BUTTON0_CLICK);
     }
     else if (pressDuration >= _holdDownTicks) {
-      click = BUTTON_RELEASE;
+      cmd.setType(BUTTON0_RELEASE);
     }
     else if (pressDuration >= _longTicks) {
-      click = BUTTON_LONGCLICK;
+      cmd.setType(BUTTON0_LONGCLICK);
     }
   } 
 
@@ -38,11 +36,11 @@ void IRAM_ATTR buttonIsrHandler(void* arg)
     lastPressedTime = now;
   }
 
-  if (click != BUTTON_NOCLICK){
+  if (!cmd.isEmpty()){
     // clear press memory
    lastPressedTime = 0;
    // send out event
-   xQueueSendFromISR(commandQueue, &click, NULL);
+   xQueueSendFromISR(commandQueue, &cmd, NULL);
   }
 }
 
