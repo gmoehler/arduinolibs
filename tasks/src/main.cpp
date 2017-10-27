@@ -6,13 +6,12 @@
    software is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
    CONDITIONS OF ANY KIND, either express or implied.
 */
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
+
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/queue.h"
 #include "driver/gpio.h"
+#include "Arduino.h"
 
 /**
  * Brief:
@@ -26,7 +25,7 @@
  *
  */
 
-#define GPIO_INPUT_IO_0     0
+#define GPIO_INPUT_IO_0     GPIO_NUM_0
 #define GPIO_INPUT_PIN_SEL  (1<<GPIO_INPUT_IO_0)
 #define ESP_INTR_FLAG_DEFAULT 0
 
@@ -48,11 +47,11 @@ static void IRAM_ATTR gpio_isr_handler(void* arg)
 {
   static uint32_t lastPressedTime = 0;
 
-  uint32_t gpioNum = (uint32_t) arg;
+  gpio_num_t gpioNum = (gpio_num_t) reinterpret_cast<int>(arg);
   int level = gpio_get_level(gpioNum);
   uint32_t now = xTaskGetTickCount() * portTICK_PERIOD_MS;
   int pressDuration = now - lastPressedTime;
-  
+
   ButtonClickType click = BUTTON_NOCLICK;
  
   // determine type of click when button is released
@@ -108,17 +107,17 @@ static void gpio_task_example(void* arg)
   }
 }
 
-void app_main()
+void setup()
 {
     gpio_config_t io_conf;
     //interrupt of rising edge
-    io_conf.intr_type = GPIO_PIN_INTR_POSEDGE;
+    io_conf.intr_type = GPIO_INTR_POSEDGE;
     //bit mask of the pins, use GPIO0 here
     io_conf.pin_bit_mask = GPIO_INPUT_PIN_SEL;
     //set as input mode    
     io_conf.mode = GPIO_MODE_INPUT;
     //enable pull-up mode
-    io_conf.pull_up_en = 1;
+    io_conf.pull_up_en = GPIO_PULLUP_ENABLE;
     gpio_config(&io_conf);
 
     //change gpio intrrupt type for one pin
@@ -136,3 +135,6 @@ void app_main()
 
 }
 
+void loop(){
+  delay(100000);
+}
