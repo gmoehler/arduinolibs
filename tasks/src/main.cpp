@@ -10,7 +10,6 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/queue.h"
-#include "driver/gpio.h"
 #include "Arduino.h"
 
 #include "button.h"
@@ -26,7 +25,6 @@
  * Press GPIO0, this triggers interrupt
  *
  */
-
 
 static void button_task_example(void* arg)
 {
@@ -53,30 +51,14 @@ static void button_task_example(void* arg)
 
 void setup()
 {
-    gpio_config_t io_conf;
-    //interrupt of rising edge
-    io_conf.intr_type = GPIO_INTR_POSEDGE;
-    //bit mask of the pins, use GPIO0 here
-    io_conf.pin_bit_mask = GPIO_INPUT_PIN_SEL;
-    //set as input mode    
-    io_conf.mode = GPIO_MODE_INPUT;
-    //enable pull-up mode
-    io_conf.pull_up_en = GPIO_PULLUP_ENABLE;
-    gpio_config(&io_conf);
+  button_setup();
 
-    //change gpio intrrupt type for one pin
-    gpio_set_intr_type(GPIO_INPUT_IO_0, GPIO_INTR_ANYEDGE);
+  //create a queue to handle gpio event from isr
+  gpio_evt_queue = xQueueCreate(10, sizeof(ButtonClickType));
+  //start gpio task
+  xTaskCreate(button_task_example, "button_task_example", 2048, NULL, 10, NULL);
 
-    //create a queue to handle gpio event from isr
-    gpio_evt_queue = xQueueCreate(10, sizeof(ButtonClickType));
-    //start gpio task
-    xTaskCreate(button_task_example, "button_task_example", 2048, NULL, 10, NULL);
-
-    //install gpio isr service
-    gpio_install_isr_service(ESP_INTR_FLAG_DEFAULT);
-    //hook isr handler for specific gpio pin
-    gpio_isr_handler_add(GPIO_INPUT_IO_0, button_isr_handler, (void*) GPIO_INPUT_IO_0);
-
+  button_setup2();
 }
 
 void loop(){
