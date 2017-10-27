@@ -50,13 +50,13 @@ static void IRAM_ATTR gpio_isr_handler(void* arg)
 
   uint32_t gpioNum = (uint32_t) arg;
   int level = gpio_get_level(gpioNum);
-
+  uint32_t now = xTaskGetTickCount() * portTICK_PERIOD_MS;
+  int pressDuration = now - lastPressedTime;
+  
   ButtonClickType click = BUTTON_NOCLICK;
  
   // determine type of click when button is released
   if (level == 1 && lastPressedTime > 0){
-    uint32_t now = xTaskGetTickCount() * portTICK_PERIOD_MS;
-    int pressDuration = now - lastPressedTime;
 
     if (pressDuration < _debounceTicks) {
       click = BUTTON_NOCLICK;
