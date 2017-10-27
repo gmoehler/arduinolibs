@@ -33,6 +33,12 @@
 int _debounceTicks = 50;      // number of millisec that have to pass by before a click is assumed as safe.
 int _longTicks = 600;        // number of millisec that have to pass by before a long button press is detected.
 
+typedef enum {
+  BUTTON_NOCLICK,
+  BUTTON_CLICK,
+  BUTTON_LONGCLICK
+} ButtonClickType;
+
 
 typedef struct {
   uint32_t time;  // the PCNT unit that originated an interrupt
@@ -43,42 +49,59 @@ static xQueueHandle gpio_evt_queue = NULL;
 
 static void IRAM_ATTR gpio_isr_handler(void* arg)
 {
-    button_evt_t evt;
-    uint32_t gpio_num = (uint32_t) arg;
-    evt.time = xTaskGetTickCount() * portTICK_PERIOD_MS;
-    evt.level = gpio_get_level(gpio_num);
-    xQueueSendFromISR(gpio_evt_queue, &evt, NULL);
+  // static button_evt_t prev_evt;
+  static button_evt_t prev_evt_pressed;
+  button_evt_t evt;
+
+  uint32_t gpio_num = (uint32_t) arg;
+  evt.time = xTaskGetTickCount() * portTICK_PERIOD_MS;
+  evt.level = gpio_get_level(gpio_num);
+
+  ButtonClickType click;
+  // determine type of click
+  if (gpio_get_level(gpio_num) == 1){
+    int presstime = evt.time - prev_evt_pressed.time;
+
+    if (presstime < _debounceTicks) {
+      click = BUTTON_NOCLICK;
+    }
+    else if (presstime < _longTicks) {
+      click = BUTTON_CLICK;
+    }
+    else if (presstime >= _longTicks) {
+      click = BUTTON_LONGCLICK;
+    }
+  } 
+
+  // remember previous event and previous "pressed down" event
+  // prev_evt = evt;
+  if (evt.level == 0){
+    prev_evt_pressed = evt;
+  }
+
+  if (click == BUTTON_CLICK || click == BUTTON_LONGCLICK){
+   xQueueSendFromISR(gpio_evt_queue, &click, NULL);
+  }
 }
 
 static void gpio_task_example(void* arg)
 {
-  static button_evt_t prev_evt;
-  static button_evt_t prev_evt_pressed;
-  button_evt_t evt;
+  ButtonClickType newclick;
+
     for(;;) {
-        if(xQueueReceive(gpio_evt_queue, &evt, portMAX_DELAY)) {
-          printf("Button: %d ms, val: %d\n", evt.time, evt.level);
-          printf("Button-prev: %d ms, val: %d\n", prev_evt_pressed.time, prev_evt_pressed.level);
+      if(xQueueReceive(gpio_evt_queue, &newclick, portMAX_DELAY)) {
 
-          if (evt.level == 0){
-              prev_evt_pressed = evt;
-          }
-          if (evt.level == 1){
-            int presstime = evt.time - prev_evt_pressed.time;
-            printf("Press time: %d ms\n", presstime );
-
-            if (presstime < _debounceTicks) {
-              printf("--> NO CLICK\n");
-            }
-            else if (presstime < _longTicks) {
-              printf("--> CLICK\n");
-            }
-            else if (presstime >= _longTicks) {
-              printf("--> LONG CLICK\n");
-            }
-         }
-        }
+      if (newclick == BUTTON_CLICK) {
+        printf("--> CLICK\n");
+      }
+      else if (newclick == BUTTON_LONGCLICK) {
+        printf("--> LONG CLICK\n");
+      }
     }
+  }
+
+
+  
 }
 
 void app_main()
@@ -98,7 +121,7 @@ void app_main()
     gpio_set_intr_type(GPIO_INPUT_IO_0, GPIO_INTR_ANYEDGE);
 
     //create a queue to handle gpio event from isr
-    gpio_evt_queue = xQueueCreate(10, sizeof(button_evt_t));
+    gpio_evt_queue = xQueueCreate(10, sizeof(ButtonClickType));
     //start gpio task
     xTaskCreate(gpio_task_example, "gpio_task_example", 2048, NULL, 10, NULL);
 
