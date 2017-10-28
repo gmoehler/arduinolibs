@@ -19,7 +19,8 @@ public:
     PoiCommandType& getType();
     void setType(PoiCommandType type);
     bool isEmpty();
-    setArgs(uint8_t[6] args);
+    void setArgs(uint8_t args[6]);
+    uint8_t* getArgs();
 private:
     PoiCommandType _type;   // the type of the command      
     uint8_t _args[6];       // arguments of the command (for wifi commands)
