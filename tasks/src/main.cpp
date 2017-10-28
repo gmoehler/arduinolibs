@@ -12,7 +12,7 @@
 #include "freertos/task.h"
 #include "freertos/queue.h"
 
-#include "Command.h"
+#include "PoiCommand.h"
 #include "button.h"
 #include "wifi.h"
 
@@ -30,24 +30,34 @@
 
 xQueueHandle commandQueue = NULL;
 
-static void buttonTask(void* arg)
+// reads from command queue
+static void adminTask(void* arg)
 {
-  Command cmd;
+  PoiCommand cmd;
 
     for(;;) {
       if(xQueueReceive(commandQueue, &cmd, portMAX_DELAY)) {
+      uint8_t* a = cmd.getArgs();  
 
-      if (cmd.getType() == BUTTON0_CLICK) {
-        printf("--> CLICK\n");
-      }
-      else if (cmd.getType() == BUTTON0_LONGCLICK) {
-        printf("--> LONG CLICK\n");
-      }
-      else if (cmd.getType() == BUTTON0_RELEASE) {
-        printf("--> BUTTON RELEASED\n");
-      }
-      else {
-        printf("--> UNKNOWN BUTTON EVENT: %d\n", static_cast<int>(cmd.getType()));
+      switch (cmd.getType()){   
+        case BUTTON0_CLICK :
+          printf("--> CLICK\n");
+          break;
+        
+        case BUTTON0_LONGCLICK :
+          printf("--> LONG CLICK\n");
+          break;
+          
+        case BUTTON0_RELEASE:
+          printf("--> BUTTON RELEASED\n");
+          break;
+        
+        case PLAY_CMD:
+          printf("--> PLAY %d %d %d %d %d %d \n", a[0], a[1], a[2], a[3], a[4], a[5]);
+          break;
+
+        default:
+          printf("--> UNKNOWN BUTTON EVENT: %d\n", static_cast<int>(cmd.getType()));
       }
     }
   }
@@ -58,9 +68,10 @@ void setup()
   buttonSetup();
 
   //create a queue to handle button commands from isr
-  commandQueue = xQueueCreate(10, sizeof(Command));
+  commandQueue = xQueueCreate(10, sizeof(PoiCommand));
   //start button task
-  xTaskCreate(buttonTask, "buttonTask", 2048, NULL, 10, NULL);
+  xTaskCreate(adminTask, "adminTask", 2048, NULL, 10, NULL);
+  xTaskCreate(wifiTask, "wifiTask", 2048, NULL, 10, NULL);
 
 }
 
