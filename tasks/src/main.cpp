@@ -53,7 +53,7 @@ static void adminTask(void* arg)
           break;
         
         case PLAY_CMD:
-          printf("--> PLAY %d %d %d %d %d %d \n", a[0], a[1], a[3], a[4], a[5]);
+          printf("--> PLAY %d %d %d %d %d %d \n", a[0], a[1], a[2], a[3], a[4], a[5]);
           break;
 
         default:
