@@ -29,6 +29,9 @@
  */
 
 xQueueHandle commandQueue = NULL;
+volatile SemaphoreHandle_t frameTimerSemaphore;
+hw_timer_t * frameTimer = NULL;
+portMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED;
 
 // reads from command queue
 static void adminTask(void* arg)
@@ -63,6 +66,26 @@ static void adminTask(void* arg)
   }
 }
 
+static void playTask(void* arg)
+{
+  for(;;) {
+    if (xSemaphoreTake(frameTimerSemaphore, portMAX_DELAY)) {
+      printf("Playing...\n");
+    }
+  }
+}
+
+void IRAM_ATTR onFrameTimer(){
+  // Increment the counter and set the time of ISR
+  portENTER_CRITICAL_ISR(&timerMux);
+  // nothing critical for now
+  portEXIT_CRITICAL_ISR(&timerMux);
+  // Give a semaphore that we can check in the loop
+  xSemaphoreGiveFromISR(frameTimerSemaphore, NULL);
+  // It is safe to use digitalRead/Write here if you want to toggle an output
+}
+
+
 void setup()
 {
   buttonSetup();
@@ -73,6 +96,16 @@ void setup()
   xTaskCreate(adminTask, "adminTask", 2048, NULL, 10, NULL);
   xTaskCreate(wifiTask, "wifiTask", 2048, NULL, 10, NULL);
 
+
+  frameTimerSemaphore = xSemaphoreCreateBinary();
+
+  // create and start frame timer 
+  frameTimer = timerBegin(0, 80, true); // start timer 0 counting up
+  timerAttachInterrupt(frameTimer, &onFrameTimer, true);
+  timerAlarmWrite(frameTimer, 1000000, true); // time in millisecs
+  timerAlarmEnable(frameTimer);
+  xTaskCreate(playTask, "playTask", 2048, NULL, 10, NULL);
+  
 }
 
 void loop(){
