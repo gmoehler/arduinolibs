@@ -15,6 +15,7 @@
 #include "PoiCommand.h"
 #include "button.h"
 #include "wifi.h"
+#include "ws2812.h"
 
 /**
  * Brief:
@@ -32,6 +33,11 @@ xQueueHandle commandQueue = NULL;
 volatile SemaphoreHandle_t frameTimerSemaphore;
 hw_timer_t * frameTimer = NULL;
 portMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED;
+
+const int DATA_PIN = 23; // was 18 Avoid using any of the strapping pins on the ESP32
+const uint16_t NUM_PIXELS = 30;
+rgbVal *pixels;
+uint8_t MAX_COLOR_VAL = 32; // Limits brightness
 
 // reads from command queue
 static void adminTask(void* arg)
@@ -71,6 +77,11 @@ static void playTask(void* arg)
   for(;;) {
     if (xSemaphoreTake(frameTimerSemaphore, portMAX_DELAY)) {
       printf("Playing...\n");
+
+      for(uint16_t i=0; i<NUM_PIXELS; i++) {
+        pixels[i] = makeRGBVal(MAX_COLOR_VAL,0,0);
+      }
+      //ws2812_setColors(NUM_PIXELS, pixels);
     }
   }
 }
@@ -97,10 +108,15 @@ void setup()
   xTaskCreate(wifiTask, "wifiTask", 2048, NULL, 10, NULL);
 
 
-  frameTimerSemaphore = xSemaphoreCreateBinary();
+  if(ws2812_init(DATA_PIN, LED_WS2812B)){
+    Serial.println("LED Pixel init error.");
+  }
+  pixels = (rgbVal*)malloc(sizeof(rgbVal) * NUM_PIXELS);
+  
 
-  // create and start frame timer 
-  frameTimer = timerBegin(0, 80, true); // start timer 0 counting up
+  // create and start frame timer and task
+  frameTimerSemaphore = xSemaphoreCreateBinary();
+    frameTimer = timerBegin(3, 80, true); // start timer 0 counting up
   timerAttachInterrupt(frameTimer, &onFrameTimer, true);
   timerAlarmWrite(frameTimer, 1000000, true); // time in millisecs
   timerAlarmEnable(frameTimer);
