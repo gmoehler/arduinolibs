@@ -39,6 +39,8 @@ const uint16_t NUM_PIXELS = 30;
 rgbVal *pixels;
 uint8_t MAX_COLOR_VAL = 32; // Limits brightness
 
+bool toggle = true;
+
 // reads from command queue
 static void adminTask(void* arg)
 {
@@ -77,11 +79,14 @@ static void playTask(void* arg)
   for(;;) {
     if (xSemaphoreTake(frameTimerSemaphore, portMAX_DELAY)) {
       printf("Playing...\n");
-
       for(uint16_t i=0; i<NUM_PIXELS; i++) {
-        pixels[i] = makeRGBVal(MAX_COLOR_VAL,0,0);
+        if (toggle)
+          pixels[i] = makeRGBVal(MAX_COLOR_VAL,0,0);
+        else 
+          pixels[i] = makeRGBVal(0, MAX_COLOR_VAL,0);
+        toggle = !toggle;
       }
-      //ws2812_setColors(NUM_PIXELS, pixels);
+      ws2812_setColors(NUM_PIXELS, pixels);
     }
   }
 }
