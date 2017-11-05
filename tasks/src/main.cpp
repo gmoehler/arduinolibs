@@ -37,9 +37,20 @@ portMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED;
 const int DATA_PIN = 23; // was 18 Avoid using any of the strapping pins on the ESP32
 const uint16_t NUM_PIXELS = 30;
 rgbVal *pixels;
-uint8_t MAX_COLOR_VAL = 32; // Limits brightness
+uint8_t MAX_COLOR_VAL = 255; // Limits brightness
 
 bool toggle = true;
+
+static void playToggle(){
+  for(uint16_t i=0; i<NUM_PIXELS; i++) {
+    if (toggle)
+      pixels[i] = makeRGBVal(MAX_COLOR_VAL,0,0);
+    else 
+      pixels[i] = makeRGBVal(0, MAX_COLOR_VAL,0);
+    toggle = !toggle;
+  }
+  ws2812_setColors(NUM_PIXELS, pixels);
+}
 
 // reads from command queue
 static void adminTask(void* arg)
@@ -74,22 +85,19 @@ static void adminTask(void* arg)
   }
 }
 
+
+
 static void playTask(void* arg)
 {
   for(;;) {
     if (xSemaphoreTake(frameTimerSemaphore, portMAX_DELAY)) {
       printf("Playing...\n");
-      for(uint16_t i=0; i<NUM_PIXELS; i++) {
-        if (toggle)
-          pixels[i] = makeRGBVal(MAX_COLOR_VAL,0,0);
-        else 
-          pixels[i] = makeRGBVal(0, MAX_COLOR_VAL,0);
-        toggle = !toggle;
-      }
-      ws2812_setColors(NUM_PIXELS, pixels);
+      playToggle();
     }
   }
 }
+
+
 
 void IRAM_ATTR onFrameTimer(){
   // Increment the counter and set the time of ISR
