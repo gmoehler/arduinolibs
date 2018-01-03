@@ -34,8 +34,12 @@ WiFiServer server(port);
 
 // https://github.com/espressif/arduino-esp32/blob/ca7f6cc516ce842cf7c6b35dbde4b0d4a5a86404/tools/sdk/include/esp32/esp_event.h
 
-void WiFiEvent(WiFiEvent_t event)
+const char * system_event_reasons1[] = { "UNSPECIFIED", "AUTH_EXPIRE", "AUTH_LEAVE", "ASSOC_EXPIRE", "ASSOC_TOOMANY", "NOT_AUTHED", "NOT_ASSOCED", "ASSOC_LEAVE", "ASSOC_NOT_AUTHED", "DISASSOC_PWRCAP_BAD", "DISASSOC_SUPCHAN_BAD", "IE_INVALID", "MIC_FAILURE", "4WAY_HANDSHAKE_TIMEOUT", "GROUP_KEY_UPDATE_TIMEOUT", "IE_IN_4WAY_DIFFERS", "GROUP_CIPHER_INVALID", "PAIRWISE_CIPHER_INVALID", "AKMP_INVALID", "UNSUPP_RSN_IE_VERSION", "INVALID_RSN_IE_CAP", "802_1X_AUTH_FAILED", "CIPHER_SUITE_REJECTED", "BEACON_TIMEOUT", "NO_AP_FOUND", "AUTH_FAIL", "ASSOC_FAIL", "HANDSHAKE_TIMEOUT" };
+#define reason2str(r) ((r>176)?system_event_reasons1[r-176]:system_event_reasons1[r-1])
+
+void WiFiEvent1(WiFiEvent_t event, system_event_info_t event_info)
 {
+  uint8_t reason;
   printf(" >>");
   switch (event) {
     case SYSTEM_EVENT_WIFI_READY:
@@ -66,6 +70,8 @@ void WiFiEvent(WiFiEvent_t event)
       break;
     case SYSTEM_EVENT_STA_DISCONNECTED:
       printf("WiFi lost connection.\n");
+      reason = event_info.disconnected.reason;
+      printf("Reason: %u - %s\n", reason, reason2str(reason));
       wifi_connected=false;
       break;
     case SYSTEM_EVENT_STA_WPS_ER_SUCCESS:
@@ -235,17 +241,17 @@ void setup()
     Serial.begin(115200);
 
     Serial.println("Listening to WiFi envents... ");  
-    WiFi.onEvent(WiFiEvent);
+    WiFi.onEvent(WiFiEvent1);
     delay(100);
     
     Serial.println("Setting STA mode... ");  
     WiFi.mode(WIFI_STA);
     delay(100);
 
-    Serial.println("Disconnecting... ");  
+    /* Serial.println("Disconnecting... ");  
     WiFi.disconnect();
     delay(100);
-
+*/
     //scanNetworks();
     Serial.println("Init WiFi  connect... ");  
     initWifiConnect();

@@ -7,6 +7,95 @@ RobustWiFiServer::RobustWiFiServer():
   _condition(NO_ERROR)
 {};
 
+const char * system_event_reasons[] = { "UNSPECIFIED", "AUTH_EXPIRE", "AUTH_LEAVE", "ASSOC_EXPIRE", "ASSOC_TOOMANY", "NOT_AUTHED", "NOT_ASSOCED", "ASSOC_LEAVE", "ASSOC_NOT_AUTHED", "DISASSOC_PWRCAP_BAD", "DISASSOC_SUPCHAN_BAD", "IE_INVALID", "MIC_FAILURE", "4WAY_HANDSHAKE_TIMEOUT", "GROUP_KEY_UPDATE_TIMEOUT", "IE_IN_4WAY_DIFFERS", "GROUP_CIPHER_INVALID", "PAIRWISE_CIPHER_INVALID", "AKMP_INVALID", "UNSUPP_RSN_IE_VERSION", "INVALID_RSN_IE_CAP", "802_1X_AUTH_FAILED", "CIPHER_SUITE_REJECTED", "BEACON_TIMEOUT", "NO_AP_FOUND", "AUTH_FAIL", "ASSOC_FAIL", "HANDSHAKE_TIMEOUT" };
+#define reason2str(r) ((r>176)?system_event_reasons[r-176]:system_event_reasons[r-1])
+
+void WiFiEvent(WiFiEvent_t event, system_event_info_t event_info)
+{
+  uint8_t reason;
+  printf(" >>");
+  switch (event) {
+    case SYSTEM_EVENT_WIFI_READY:
+      printf("Wifi ready.\n");
+      break;
+    case SYSTEM_EVENT_SCAN_DONE:
+      printf("Wifi scan done.\n");
+      break;
+    case SYSTEM_EVENT_STA_START:
+      printf("Wifi started...\n");
+      break;
+    case SYSTEM_EVENT_STA_STOP:
+      printf("Wifi disconnected.\n");
+      break;
+    case SYSTEM_EVENT_STA_CONNECTED:
+      printf("Wifi connected.\n");
+      break;
+    case SYSTEM_EVENT_STA_AUTHMODE_CHANGE:
+      printf("Authmode of Access Point has changed.\n");
+      break;
+    case SYSTEM_EVENT_STA_GOT_IP:
+      printf("IP address: %s\n", WiFi.localIP().toString().c_str());
+      break;
+    case SYSTEM_EVENT_STA_DISCONNECTED:
+      printf("WiFi lost connection.\n");
+      reason = event_info.disconnected.reason;
+      printf("Reason: %u - %s\n", reason, reason2str(reason));
+      break;
+    case SYSTEM_EVENT_STA_WPS_ER_SUCCESS:
+      printf("WiFi connected by WPS.\n");
+      break;
+    case SYSTEM_EVENT_STA_WPS_ER_FAILED:
+      printf("WPS connection failed.\n");
+      break;
+    case SYSTEM_EVENT_STA_WPS_ER_TIMEOUT:
+      printf("WPS connection timeout.\n");
+      break;
+    case SYSTEM_EVENT_STA_WPS_ER_PIN:
+      printf("WPS with pin mode: %s\n"/*, PIN2STR(event.event_info.sta_er_pin.pin_code)*/);
+      break;
+    default:
+      printf("[WiFi-event] Unhandled event: %d\n", event);
+      break;
+  }
+
+  printf("Wifi status:");
+  switch (WiFi.status()){
+    case WL_NO_SHIELD:
+    printf("WL_NO_SHIELD");
+    break;
+    case WL_IDLE_STATUS:
+    printf("WL_IDLE_STATUS");
+    break;
+    case WL_NO_SSID_AVAIL:
+    printf("WL_NO_SSID_AVAIL");
+    break;
+    case WL_SCAN_COMPLETED:
+    printf("WL_SCAN_COMPLETED");
+    break;
+    case WL_CONNECTED:
+    printf("WL_CONNECTED");
+    break;
+    case WL_CONNECT_FAILED:
+    printf("WL_CONNECT_FAILED");
+    break;
+    case WL_CONNECTION_LOST:
+    printf("WL_CONNECTION_LOST");
+    break;
+    case WL_DISCONNECTED:
+    printf("WL_DISCONNECTED");
+    break;
+    default:
+    printf("Other status: %d", WiFi.status());
+    break;
+  }
+  printf("\n");
+
+  printf("mac: %s\n", WiFi.macAddress().c_str());
+  printf("hostname: %s\n", WiFi.getHostname());
+  printf("gateway: %s\n", WiFi.gatewayIP().toString().c_str());
+}
+
+
 void RobustWiFiServer::init(IPAddress ip, IPAddress gateway, IPAddress subnet, 
   uint16_t serverPort, String ssid, String wifiPassword) {
   _ip = ip;
@@ -18,7 +107,9 @@ void RobustWiFiServer::init(IPAddress ip, IPAddress gateway, IPAddress subnet,
   _targetState = DISCONNECTED; 
   _currentState = DISCONNECTED;
 
+   WiFi.onEvent(WiFiEvent);
   _server = WiFiServer(serverPort);
+
   }
 
 void RobustWiFiServer::connect(){
@@ -115,7 +206,7 @@ void RobustWiFiServer::_invokeAction(Transition& trans){
     else if (Transition(DISCONNECTED, CONNECTED) == trans){
       Serial.println("Connecting to Wifi...");
       WiFi.mode(WIFI_STA);                  // "station" mode
-      WiFi.disconnect();                    // to be on the safe side
+      // WiFi.disconnect();                    // to be on the safe side
       WiFi.config(_ip, _gateway, _subnet);  // set specific ip...
       WiFi.begin(_ssid.c_str(), _wifiPassword.c_str());     // connect to router
     }
