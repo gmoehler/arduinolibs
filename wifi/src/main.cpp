@@ -21,6 +21,7 @@ bool dataRead = false;
 void setup()
 {
     Serial.begin(115200);
+    WiFi.onEvent(onWiFiEvent);
     wifiServer.init(myIP, gateway, subnet, port, ssid, password);
     wifiServer.connect();
 }

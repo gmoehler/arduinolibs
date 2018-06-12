@@ -25,15 +25,22 @@
 
 #include "wifi_utils.h"
 
+#define TRANSITION_TIMEOUT 2000
+#define LONG_TRANSITION_TIMEOUT 10000
+
 class RobustWiFiServer
 {
 public:
   RobustWiFiServer();
   void init(IPAddress ip, IPAddress gateway, IPAddress subnet, 
-  uint16_t serverPort, String ssid, String wifiPassword); // to be called in setup()
+    uint16_t serverPort, String ssid, String wifiPassword); // to be called in setup()
 
   void connect();
+  // connect to a different ip (only when being disconnected)
+  void connect(IPAddress ip);
   void disconnect();
+  
+  void clientDisconnect();
 
   ServerState getState();
   ServerCondition getCondition();
@@ -49,6 +56,7 @@ private:
   ServerState _currentState; // current state
   ServerState _targetState;  // ultimate target
   ServerCondition _condition;
+  bool _targetUpdated;
 
   IPAddress _ip; 
   IPAddress _gateway; 
@@ -61,9 +69,7 @@ private:
   WiFiClient _client;
   
   Transition _determineNextTransition();
-  Transition _determineNextConnectTransition();
-  Transition _determineNextDisconnectTransition();
-  Transition _getRevertTransition(Transition trans);
+  Transition _getStepBackTransition();
   
   void _invokeAction(Transition& trans);
   bool _wasTransitionSuccessful(Transition trans);
