@@ -110,6 +110,39 @@ void onWiFiEvent(WiFiEvent_t event, system_event_info_t event_info)
     case SYSTEM_EVENT_STA_WPS_ER_PIN:
       printf("WPS with pin mode: %s\n"/*, PIN2STR(event.event_info.sta_er_pin.pin_code)*/);
       break;
+    case SYSTEM_EVENT_AP_START:
+      printf("AP start\n");
+      break;
+    case SYSTEM_EVENT_AP_STOP:
+      printf("AP stop\n");
+      break;
+    case SYSTEM_EVENT_AP_STACONNECTED:
+      printf("station connected to AP\n");
+      break;
+    case SYSTEM_EVENT_AP_STADISCONNECTED:
+      printf("station disconnected from AP\n");
+      break;
+    case SYSTEM_EVENT_AP_PROBEREQRECVED:
+      printf("Received probe request packet in soft-AP interface\n");
+      break;
+    case SYSTEM_EVENT_GOT_IP6:
+      printf("ESP32 station or ap or ethernet interface v6IP addr is preferred\n");
+      break;
+    case SYSTEM_EVENT_ETH_START:
+      printf("ESP32 ethernet start\n");
+      break;
+    case SYSTEM_EVENT_ETH_STOP:
+      printf("ESP32 ethernet stop\n");
+      break;
+   case SYSTEM_EVENT_ETH_CONNECTED:
+      printf("ESP32 ethernet phy link up\n");
+      break;
+   case SYSTEM_EVENT_ETH_DISCONNECTED:
+      printf("ESP32 ethernet phy link down\n");
+      break;
+   case SYSTEM_EVENT_ETH_GOT_IP:
+      printf("ESP32 ethernet got IP from connected AP\n");
+      break;
     default:
       printf("[WiFi-event] Unhandled event: %d\n", event);
       break;
