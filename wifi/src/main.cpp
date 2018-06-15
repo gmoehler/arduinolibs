@@ -23,6 +23,8 @@
 
 #define EXAMPLE_MAX_STA_CONN       CONFIG_MAX_STA_CONN
 
+int level = 0;
+
 /* FreeRTOS event group to signal when we are connected*/
 static EventGroupHandle_t wifi_event_group;
 
@@ -89,7 +91,7 @@ void wifi_init_sta()
              SSID, PASSWORD);
 }
 
-void app_main()
+void setup()
 {
     //Initialize NVS
     esp_err_t ret = nvs_flash_init();
@@ -101,4 +103,13 @@ void app_main()
     
     ESP_LOGI(TAG, "ESP_WIFI_MODE_STA");
     wifi_init_sta();
+}
+
+
+void loop()
+{
+    vTaskDelay(1000 / portTICK_PERIOD_MS);
+
+    gpio_set_level(GPIO_NUM_4, level);
+    level = !level;
 }
