@@ -1,9 +1,9 @@
 #include "RobustWiFiServer.h"
 
 RobustWiFiServer::RobustWiFiServer():
-  _currentTransition(DISCONNECTED,DISCONNECTED),
-  _currentState(DISCONNECTED),
-  _targetState(DISCONNECTED),
+  _currentTransition(UNCONFIGURED,UNCONFIGURED),
+  _currentState(UNCONFIGURED),
+  _targetState(UNCONFIGURED),
   _condition(NO_ERROR),
   _targetUpdated(false)
 {};
@@ -17,9 +17,10 @@ void RobustWiFiServer::init(IPAddress ip, IPAddress gateway, IPAddress subnet,
   _serverPort = serverPort;
   _ssid = ssid;
   _wifiPassword = wifiPassword;
-  _targetState = DISCONNECTED; 
-  _currentState = DISCONNECTED;
+  _targetState = UNCONFIGURED; 
+  _currentState = UNCONFIGURED;
 
+  wifi_init();
   _server = WiFiServer(serverPort);
   }
 
@@ -34,10 +35,10 @@ void RobustWiFiServer::connect(IPAddress ip){
 	_ip = ip;
    connect();
 }
-  
+
 void RobustWiFiServer:: disconnect(){
   LOGI(RWIFIS, "Disconnect request received...");
-  _targetState = DISCONNECTED;
+  _targetState = UNCONFIGURED;
   _targetUpdated = true;
 }
 
@@ -75,34 +76,32 @@ Transition RobustWiFiServer::_determineNextTransition(){
 }
 
 Transition RobustWiFiServer::_getStepBackTransition(){
-  ServerState fromState = _currentTransition.from;
-  ServerState toState = (_targetState >= _currentState) ? 
-    getNextServerStateDown(fromState) : 
-    getNextServerStateUp(fromState);
+  // always step back from the "lowest" order state towards disconnect
+  ServerState fromState = (_currentTransition.from < _currentTransition.to) ? 
+    _currentTransition.from : _currentTransition.to;
+  ServerState toState = getNextServerStateDown(fromState) ;
   return Transition(fromState, toState);
 }
 
 void RobustWiFiServer::_invokeAction(Transition& trans){
 
-  if (trans._invokeAction) {
-    if (!trans.withAction()){
+    // actions are only invoked once
+  if (!trans.wasActionInvoked()) {
+    if (trans.isEmptyTransition()){
       LOGV(RWIFIS, "No action in transition...");
       // do nothing
     }
     // connecting actions...
-    else if (Transition(DISCONNECTED, CONNECTED) == trans){
-      LOGI(RWIFIS, "Connecting to Wifi with SSID %s & ip %s...", _ssid.c_str(), _ip.toString().c_str());
-      WiFi.mode(WIFI_STA);                  // "station" mode
-      // WiFi.disconnect();                    // causes auth error on following connect
-      WiFi.config(_ip, _gateway, _subnet);  // set specific ip...
-      WiFi.begin(_ssid.c_str(), _wifiPassword.c_str());     // connect to router
+    else if (Transition(UNCONFIGURED, DISCONNECTED) == trans){
+      LOGI(RWIFIS, "Configuring to Wifi with SSID %s & ip %s...", _ssid.c_str(), _ip.toString().c_str());
+      wifi_start_sta(_ssid, _wifiPassword, _ip, _gateway, _subnet);
     }
-    else if (Transition(ERR_SSID_NOT_AVAIL, DISCONNECTED) == trans){
-      // nothing to be done
+    else if (Transition(DISCONNECTED, CONNECTED) == trans){
+      LOGI(RWIFIS, "Connecting to access point...");
+      esp_wifi_connect();
     }
     else if (Transition(CONNECTED, SERVER_LISTENING) == trans){
       LOGI(RWIFIS, "Starting server...");
-      delay(500);
       _server.begin();                      // bind and listen
     }
     else if (Transition(SERVER_LISTENING, CLIENT_CONNECTED) == trans){
@@ -129,12 +128,11 @@ void RobustWiFiServer::_invokeAction(Transition& trans){
     }
     else if (Transition(CONNECTED, DISCONNECTED) == trans){
       LOGI(RWIFIS, "Disconnecting Wifi...");
-      WiFi.disconnect();
+      esp_wifi_disconnect();
     }
-    // this transition appears only on no-ssid with reverted action
-    // due to timeout
-    else if (Transition(DISCONNECTED, ERR_SSID_NOT_AVAIL) == trans){
-      // nothing to be done
+    else if (Transition(DISCONNECTED, UNCONFIGURED) == trans){
+      LOGI(RWIFIS, "Stopping Wifi...");
+      wifi_stop_sta();
     }
     else {
       LOGE(RWIFIS, "ERROR. Unknown transition requested: %s", trans.toString().c_str());
@@ -143,69 +141,49 @@ void RobustWiFiServer::_invokeAction(Transition& trans){
     // remember invocation time for timeout
     trans.setLastInvocationTime();
     // invoke action only once
-    trans._invokeAction = false;
+    trans.setActionInvoked(true);
   }
 }
 
 bool RobustWiFiServer::_wasTransitionSuccessful(Transition trans){
-  // special checking when wifi connection was lost
-  if (Transition(ERR_SSID_NOT_AVAIL, DISCONNECTED) == trans){
-   LOGI(RWIFIS, "Scanning SSIDs for %s...", _ssid.c_str());
-    int n = WiFi.scanNetworks(false, false, false, 500);
-    bool foundSsid = false;
-    for (int i = 0; i < n; ++i) {
-      if (WiFi.SSID(i).equals( _ssid)){
-        LOGI(RWIFIS, "*%s", WiFi.SSID(i).c_str());
-        foundSsid = true;
-      }
-      else {
-        LOGI(RWIFIS, "%s", WiFi.SSID(i).c_str());
-      }
-    }
-    if (foundSsid) {
-      LOGI(RWIFIS, "Specified SSID (%s) found...", _ssid.c_str());
-      return true;
-    }
-    delay(2000);
-    return false;
-  }
-  return _checkState(trans.to);
+  // transition with same from and to state are never successfull
+  return trans.from != trans.to 
+    && _checkState(trans.to);
 }
 
 // check whether a state that happen asynchronously
 bool RobustWiFiServer::_checkState(ServerState state, bool debug){
 
   bool stateok = false;
-  LOGV(RWIFIS, "wifistate: %s", wiFiStateToString().c_str());
+  LOGV(RWIFIS, "Checking wifistate %s", wiFiStateToString().c_str());
   switch(state){
     
-    case ERR_SSID_NOT_AVAIL:
-    stateok = (WiFi.status() == WL_NO_SSID_AVAIL);
+    case UNCONFIGURED:
+    stateok = (wifiState == WIFI_UNCONFIGURED);
     break;
 
     case DISCONNECTED:
-    stateok = (WiFi.status() != WL_CONNECTED && WiFi.status() != WL_NO_SSID_AVAIL);
+    stateok = (wifiState == WIFI_STARTED);
     break;
 
     case CONNECTED:
-    delay(500);
-    stateok = (WiFi.status() == WL_CONNECTED);
+    stateok = (wifiState == WIFI_CONNECTED);
     break;
 
     case SERVER_LISTENING:
     // need to also check wifi status since server would not notice failing wifi
-    stateok = (WiFi.status() == WL_CONNECTED) && _server; // equals to is_listening()
+    stateok = (wifiState == WIFI_CONNECTED) && _server; // equals to is_listening()
     break;
 
     case CLIENT_CONNECTED:
     if (!_client) {
       _client = _server.available();
     }
-    stateok =  (WiFi.status() == WL_CONNECTED) && _client.connected();
+    stateok =  (wifiState == WIFI_CONNECTED) && _client.connected();
     break;
 
     case DATA_AVAILABLE:
-    stateok =  (WiFi.status() == WL_CONNECTED) && _client.available();
+    stateok =  (wifiState == WIFI_CONNECTED) && _client.available();
     break;
 
     default: // unknown state
@@ -228,51 +206,41 @@ void RobustWiFiServer::_printInternalState(){
 }
 
 bool RobustWiFiServer::_timeoutReached(){
-  // timeout does not make sense when ssid is not there
-  if (_currentState == ERR_SSID_NOT_AVAIL) {
+  // timeout does not make sense when we are not even configured
+  if (_currentState == UNCONFIGURED) {
     return false;
   }
-  uint32_t timeout = ( Transition(CONNECTED, SERVER_LISTENING) == _currentTransition ) ? 
-      TRANSITION_TIMEOUT : LONG_TRANSITION_TIMEOUT;
+
   uint32_t now = millis();
-  return (now - _currentTransition.getLastInvocationTime() > timeout);
+  return (now - _currentTransition.getLastInvocationTime() > TRANSITION_TIMEOUT);
 }
 
 void RobustWiFiServer::loop(){
 
   if (_targetUpdated) {
+    LOGD(RWIFIS, "Target updated to: %s", serverStateToString(_targetState).c_str());
+    _condition.resetError();
     _currentTransition = _determineNextTransition();
+    LOGD(RWIFIS, "NEW Transition: %s", _currentTransition.toString().c_str());
     _targetUpdated = false;
   }
 
-  // always verify current state to detect errors
-  // might already be in next state: check this
+  // check whether we are either in current state of 'to' state
   if (!_checkState(_currentState, true)
       && !_checkState(_currentTransition.to, true)){
 
-    // current state has an error
+    // we are neither in 'from' nor in 'to' state
     _condition.error = STATE_CHECK_FAILED;
     LOGW(RWIFIS, "WARNING. Checking failed for state %s", serverStateToString(_currentState).c_str());
 
-    if (_currentState == DISCONNECTED && WiFi.status() == WL_NO_SSID_AVAIL){
-      // for SSID not found we have a special error state
-      _currentState = ERR_SSID_NOT_AVAIL;
-      _currentTransition = _determineNextTransition();
-      LOGI(RWIFIS, "%s", _currentTransition.toString().c_str());
-      delay(1000);
-    }
-    else {
-      // switch back one state
-      _currentTransition = _getStepBackTransition();
-      LOGI(RWIFIS, "%s", _currentTransition.toString().c_str());
-      _currentState = _currentTransition.to;
-      delay(200);
-    }
+    // switch back one state
+    _currentTransition = _getStepBackTransition();
+    LOGI(RWIFIS, "Stepping back with %s", _currentTransition.toString().c_str());
+    _currentState = _currentTransition.from;
   }
 
   // check whether transition was successful
-  else if (_currentTransition.withAction() 
-           && _wasTransitionSuccessful(_currentTransition)) {
+  else if ( _wasTransitionSuccessful(_currentTransition)) {
     _currentState = _currentTransition.to;
     _condition.resetError();
     if (_currentState == _targetState) { 
@@ -286,26 +254,8 @@ void RobustWiFiServer::loop(){
     LOGD(RWIFIS, "NEW Transition: %s", _currentTransition.toString().c_str());
   }
 
-  // when disconnected was targeted, ssid-not-avail is also fine (do this once only)
-  else if (_currentState == ERR_SSID_NOT_AVAIL && _targetState == DISCONNECTED) {
-    // target reached: create no-action transition once only
-    if (_currentTransition.withAction()) {
-      _currentTransition = Transition(_currentState,_currentState);
-      LOGI(RWIFIS, "Disconnect target reached: %s", serverStateToString(_targetState).c_str());
-      LOGD(RWIFIS, "NEW Transition: %s", _currentTransition.toString().c_str());
-    }
-  }
-
-  // was in target state (with no action), but now have a different target
-  else if (!_currentTransition.withAction() 
-         && _currentState != _targetState) {
-    _condition.resetError();
-    _currentTransition = _determineNextTransition(); 
-    LOGD(RWIFIS, "NEW Transition: %s", _currentTransition.toString().c_str());
-  }
-
-  // we stayed too long in this state, repeat action
-  else if (_currentTransition.withAction() && _timeoutReached()){
+  // we stayed too long in this state, step back one level and re-try
+  else if (!_currentTransition.isEmptyTransition() && _timeoutReached()){
     _condition.error = TRANSITION_TIMEOUT_REACHED;
     _condition.numberOfTimeouts++;
     // we first revert transition to be on the safe side
@@ -316,6 +266,5 @@ void RobustWiFiServer::loop(){
       serverStateToString(_currentTransition.to).c_str());
   }
 
-  // some actions are only invoked once
   _invokeAction(_currentTransition);
 }

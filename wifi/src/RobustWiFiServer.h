@@ -25,8 +25,7 @@
 
 #include "wifi_utils.h"
 
-#define TRANSITION_TIMEOUT 2000
-#define LONG_TRANSITION_TIMEOUT 10000
+#define TRANSITION_TIMEOUT 5000
 
 class RobustWiFiServer
 {

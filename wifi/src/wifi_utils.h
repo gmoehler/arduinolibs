@@ -2,7 +2,9 @@
 #define WIFI_UTILS
 
 #ifndef WITHIN_UNITTEST
-  #include <WiFi.h>
+  #include <Arduino.h>
+  #include "esp_wifi.h"
+  #include "esp_event_loop.h"
 #else
   #include "../test/mock_Arduino.h"
   #include "../test/mock_wifi.h"
@@ -28,9 +30,19 @@
 
 
 #define RWIFIS  "RWIF"   // logging tag
+#define WIFI_U  "WIFU"   // wifi utils
+
+// for SSID connection only
+enum WifiState {
+  WIFI_UNCONFIGURED,
+  WIFI_STARTED,
+  WIFI_CONNECTED
+} ;
+
+extern WifiState wifiState;
 
 enum ServerState {  
-  ERR_SSID_NOT_AVAIL = 0,
+  UNCONFIGURED       = 0,
   DISCONNECTED       = 1,
   CONNECTED          = 2,
   SERVER_LISTENING   = 3,
@@ -58,15 +70,16 @@ class Transition
 public:
   ServerState from;
   ServerState to;
-  bool _invokeAction;
+  bool _actionInvoked;
   uint32_t _lastInvocationTime;
   Transition(ServerState f, ServerState t):
-    from(f), to(t), _invokeAction(true), _lastInvocationTime(0){};
+    from(f), to(t), _actionInvoked(false), _lastInvocationTime(0){};
   bool operator==(Transition& rhs)const {
     return rhs.from == this->from && rhs.to == this->to;
   }
-  bool withAction(){ return from != to;}
-  void setInvokeAction(bool ia) {_invokeAction = ia;}
+  bool isEmptyTransition(){ return from == to;}
+  void setActionInvoked(bool ai) {_actionInvoked = ai;}
+  bool wasActionInvoked() {return _actionInvoked;}
   void setLastInvocationTime() {_lastInvocationTime = millis();}
   uint32_t getLastInvocationTime() { return _lastInvocationTime;}
   String  toString();
@@ -74,7 +87,10 @@ public:
 
 String serverStateToString(ServerState state);
 String wiFiStateToString();
-void onWiFiEvent(WiFiEvent_t event, system_event_info_t event_info);
 ServerState getNextServerStateUp(ServerState state);
 ServerState getNextServerStateDown(ServerState state);
+bool wifi_init();
+bool wifi_start_sta(String ssid, String password, 
+    IPAddress ip, IPAddress gateway, IPAddress subnet);
+void wifi_stop_sta();
 #endif
