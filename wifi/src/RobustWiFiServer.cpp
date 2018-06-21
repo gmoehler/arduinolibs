@@ -18,7 +18,9 @@ void RobustWiFiServer::init(IPAddress ip, IPAddress gateway, IPAddress subnet,
   _ssid = ssid;
   _wifiPassword = wifiPassword;
   _targetState = UNCONFIGURED; 
+  _targetState2 = UNKNOWN;
   _currentState = UNCONFIGURED;
+  _lastDataAvailableCount = 0;
 
   wifi_init();
   _server = WiFiServer(serverPort);
@@ -31,9 +33,17 @@ void RobustWiFiServer::connect(){
 }
 
 void RobustWiFiServer::connect(IPAddress ip){
-	// does not switch to new ip unless disconnected
-	_ip = ip;
-   connect();
+  if (ip == _ip) {
+    LOGI(RWIFIS, "Connection request with ip %s received...", ip.toString().c_str());
+    _targetState2 = DATA_AVAILABLE;
+  }
+  else {
+    LOGI(RWIFIS, "Connection request with new ip %s received...", ip.toString().c_str());
+    _targetState = UNCONFIGURED;
+	  _ip = ip;
+    _targetState2 = DATA_AVAILABLE;
+  }
+  _targetUpdated = true;
 }
 
 void RobustWiFiServer:: disconnect(){
@@ -45,6 +55,7 @@ void RobustWiFiServer:: disconnect(){
 void RobustWiFiServer::clientDisconnect(){
 	LOGI(RWIFIS, "Client disconnect request received...");
   _targetState = SERVER_LISTENING;
+  _targetState2 = DATA_AVAILABLE;
   _targetUpdated = true;
 }
 
@@ -109,7 +120,10 @@ void RobustWiFiServer::_invokeAction(Transition& trans){
       _client = _server.available();        // accept - also checked at checkState()
     }   
     else if (Transition(CLIENT_CONNECTED, DATA_AVAILABLE) == trans){
-      LOGI(RWIFIS, "Waiting for data...");
+      // dont show message for keepAlive signal
+      if (_lastDataAvailableCount != 1) {
+        LOGI(RWIFIS, "Waiting for data...");
+      }
       // nothing to be done
     } 
 
@@ -155,6 +169,7 @@ bool RobustWiFiServer::_wasTransitionSuccessful(Transition trans){
 bool RobustWiFiServer::_checkState(ServerState state, bool debug){
 
   bool stateok = false;
+  int dataCount = 0;
   LOGV(RWIFIS, "Checking wifistate %s", wiFiStateToString().c_str());
   switch(state){
     
@@ -183,13 +198,22 @@ bool RobustWiFiServer::_checkState(ServerState state, bool debug){
     break;
 
     case DATA_AVAILABLE:
-    stateok =  (wifiState == WIFI_CONNECTED) && _client.available();
+    dataCount = _client.available();
+    if (dataCount != 0) {
+      _lastDataAvailableCount = dataCount;
+    }
+    stateok =  (wifiState == WIFI_CONNECTED) && dataCount;
     break;
 
     default: // unknown state
     stateok = false;
     break;
   } 
+
+  // reset to show waiting data msg again
+  if (state < CLIENT_CONNECTED) {
+    _lastDataAvailableCount = 0; 
+  }
 
   if (!stateok && debug) {
     _printInternalState();
@@ -198,10 +222,10 @@ bool RobustWiFiServer::_checkState(ServerState state, bool debug){
 }
 
 void RobustWiFiServer::_printInternalState(){
-	LOGD(RWIFIS, "WiFi state: %s", wiFiStateToString().c_str());
-  LOGD(RWIFIS, " Server %s %s", 
+	LOGV(RWIFIS, "WiFi state: %s", wiFiStateToString().c_str());
+  LOGV(RWIFIS, " Server: %s %s", 
     _server ? "conn " : "nc ", _server.available() ? "avail" : "na");
-  LOGD(RWIFIS, " Client: %s %s", 
+  LOGV(RWIFIS, " Client: %s %s", 
     _client.connected() ? "conn " : "nc ", _client.available() ? "avail" : "na");
 }
 
@@ -231,11 +255,19 @@ void RobustWiFiServer::loop(){
 
     // we are neither in 'from' nor in 'to' state
     _condition.error = STATE_CHECK_FAILED;
-    LOGW(RWIFIS, "WARNING. Checking failed for state %s", serverStateToString(_currentState).c_str());
 
     // switch back one state
     _currentTransition = _getStepBackTransition();
-    LOGI(RWIFIS, "Stepping back with %s", _currentTransition.toString().c_str());
+
+    if (_currentState == DATA_AVAILABLE) {
+      LOGD(RWIFIS, "WARNING. Checking failed for state %s", serverStateToString(_currentState).c_str());
+      LOGD(RWIFIS, "Stepping back with %s", _currentTransition.toString().c_str());
+    }
+    else {
+      LOGW(RWIFIS, "WARNING. Checking failed for state %s", serverStateToString(_currentState).c_str()); 
+      LOGI(RWIFIS, "Stepping back with %s", _currentTransition.toString().c_str());     
+    }
+    
     _currentState = _currentTransition.from;
   }
 
@@ -244,9 +276,23 @@ void RobustWiFiServer::loop(){
     _currentState = _currentTransition.to;
     _condition.resetError();
     if (_currentState == _targetState) { 
-      // target reached: create no-action transition
-      _currentTransition = Transition(_currentState,_currentState);
-      LOGI(RWIFIS, "Target reached: %s", serverStateToString(_targetState).c_str());
+      // dont show message for keepAlive signal
+      if (_currentState == DATA_AVAILABLE && _lastDataAvailableCount != 1) {
+        LOGI(RWIFIS, "Data available: %d bytes.", _lastDataAvailableCount);
+      }
+      if (_targetState2 == UNKNOWN) {
+        // final target reached: create no-action transition
+        LOGD(RWIFIS, "Final Target reached: %s", serverStateToString(_targetState).c_str());
+        _currentTransition = Transition(_currentState,_currentState);
+      }
+      else {
+        LOGD(RWIFIS, "Target reached: %s, new target: %s", 
+          serverStateToString(_targetState).c_str(),
+          serverStateToString(_targetState2).c_str());
+        _targetState = _targetState2;
+        _targetState2 = UNKNOWN;
+        _currentTransition = _determineNextTransition();
+      }
     }
     else {
       _currentTransition = _determineNextTransition();

@@ -14,6 +14,7 @@
 #include "esp_event_loop.h"
 #include "nvs_flash.h"
 #include "IPAddress.h"
+#include <WiFi.h>
 
 #include "lwip/err.h"
 #include "lwip/sys.h"
@@ -32,6 +33,8 @@ IPAddress myIP(192,168,1,127);
 IPAddress myGateway(192, 168, 1, 1);
 IPAddress mySubnet(255, 255, 255, 0);
 uint16_t port = 1110;
+
+WiFiServer server(port);
 
 int level = 0;
 
@@ -104,24 +107,24 @@ static esp_err_t event_handler(void *ctx, system_event_t *event)
 
 void serverStartup(){
   
-  Serial.println("Starting server\n");
+  printf("Starting server\n");
   server.begin();
-  delay(100);
+  vTaskDelay(1000 / portTICK_PERIOD_MS);
 
-  Serial.println("Setting server timeout\n");
+  printf("Setting server timeout\n");
   //int st1 = server.setTimeout(5);
   //if (st1 != 0)
   //  printf("timeout error %d ", st1);
   delay(1000);
 
-  Serial.println("Waiting for client...");
+  printf("Waiting for client...\n");
 
   WiFiClient client;   // listen for incoming clients
   //client.setTimeout(10);             // timeout does not seem to work
   client = server.available();
 
   if (client) {                             // if client is connected
-    Serial.println("New Client.");           // print a message out the serial port
+    printf("New Client.\n");           // print a message out the serial port
     //String currentLine = "";                // make a String to hold incoming data from the client
     while (client.connected()) {            // loop while the client's connected
       int st = client.setTimeout(2);             // timeout does not seem to work
@@ -135,13 +138,13 @@ void serverStartup(){
       }
     }
     // close the connection:
-    Serial.println("Closing connection\n");
+    printf("Closing connection\n");
     client.stop();
     delay(100);
 
-    Serial.println("Client Disconnected.");
+    printf("Client Disconnected.\n");
   }
-  Serial.println("Ending server.");
+  printf("Ending server.\n");
   server.end();
 }
 
@@ -238,7 +241,7 @@ void loop()
     // gpio_set_level(GPIO_NUM_4, level);
     // level = !level;
 
-    delay(1000);
+    vTaskDelay(1000 / portTICK_PERIOD_MS);
     if (wifi_connected) {
       serverStartup();
     }

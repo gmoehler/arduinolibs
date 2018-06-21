@@ -30,7 +30,7 @@ static esp_err_t event_handler(void *ctx, system_event_t *event)
           LOGD(WIFI_U, "Wifi connected.");
         break;
         case SYSTEM_EVENT_STA_GOT_IP:
-          LOGD(WIFI_U, "Wifi got ip:%s",
+          LOGI(WIFI_U, "Wifi got ip %s",
             ip4addr_ntoa(&event->event_info.got_ip.ip_info.ip));
           wifiState = WIFI_CONNECTED;
         break;
@@ -41,7 +41,6 @@ static esp_err_t event_handler(void *ctx, system_event_t *event)
           LOGD(WIFI_U, "WiFi disconnected. ");
           reason = &event->event_info.disconnected.reason;
           LOGD(WIFI_U, "Reason: %u - %s\n", *reason, reason2str(*reason));
-          // only ASSOC_FAIL (11) is a normal disconnect
           wifiState = WIFI_STARTED;
         break;
         default:
@@ -72,18 +71,8 @@ bool wifi_start_sta(String ssid, String password,
   info.gw.addr = static_cast<uint32_t>(gateway);
   info.netmask.addr = static_cast<uint32_t>(subnet);
 
-  esp_err_t err = tcpip_adapter_dhcpc_stop(TCPIP_ADAPTER_IF_STA);
-  if (err != ESP_OK && err != ESP_ERR_TCPIP_ADAPTER_DHCP_ALREADY_STOPPED){
-      LOGE(WIFI_U, "DHCP could not be stopped! Error: %s", esp_err_to_name(err));
-      return false;
-  }
-
-  err = tcpip_adapter_set_ip_info(TCPIP_ADAPTER_IF_STA, &info);
-  if (err != ESP_OK) {
-      LOGE(WIFI_U, "STA IP could not be configured! Error:%s", esp_err_to_name(err));
-      return false;
-  }
-
+  esp_err_t err;
+  
   LOGI(WIFI_U, "Init Wifi...");
   wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
   
@@ -99,7 +88,7 @@ bool wifi_start_sta(String ssid, String password,
     return false;
   }
 
-  LOGI(WIFI_U, "Configuring Wifi with SSID:%s and password:%s...\n", ssid.c_str(), password.c_str());
+  LOGI(WIFI_U, "Configuring Wifi with SSID:%s...\n", ssid.c_str());
   wifi_config_t sta_config = { };
   strcpy((char*)sta_config.sta.ssid, ssid.c_str());
   strcpy((char*)sta_config.sta.password, password.c_str());
@@ -116,6 +105,19 @@ bool wifi_start_sta(String ssid, String password,
     LOGE(WIFI_U, "Cannot start wifi. Error: %s", esp_err_to_name(err));
     return false;
   }
+
+  err = tcpip_adapter_dhcpc_stop(TCPIP_ADAPTER_IF_STA);
+  if (err != ESP_OK && err != ESP_ERR_TCPIP_ADAPTER_DHCP_ALREADY_STOPPED){
+      LOGE(WIFI_U, "DHCP could not be stopped! Error: %s", esp_err_to_name(err));
+      return false;
+  }
+
+  err = tcpip_adapter_set_ip_info(TCPIP_ADAPTER_IF_STA, &info);
+  if (err != ESP_OK) {
+      LOGE(WIFI_U, "STA IP could not be configured! Error:%s", esp_err_to_name(err));
+      return false;
+  }
+
 
   LOGI(WIFI_U, "End of wifi_start_sta.");
   return true;

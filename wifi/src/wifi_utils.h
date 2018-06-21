@@ -13,7 +13,7 @@
 // define default compile time 
 // #ifndef LOG_LOCAL_LEVEL
 #undef LOG_LOCAL_LEVEL
-#define LOG_LOCAL_LEVEL ESP_LOG_DEBUG
+#define LOG_LOCAL_LEVEL ESP_LOG_INFO
 // #endif
 
 #include "esp_log.h"
@@ -21,11 +21,17 @@
 // need to define my own logging macros since other are not activated by LOG_LOCAL_LEVEL as expected
 #ifndef LOG_MACROS
 #define LOG_MACROS
-#define LOGE( tag, format, ... )  if (LOG_LOCAL_LEVEL >= ESP_LOG_ERROR)   { printf(format "\n",  ##__VA_ARGS__); }
+#define LOGE( tag, format, ... )  if (LOG_LOCAL_LEVEL >= ESP_LOG_ERROR)   { esp_log_write(ESP_LOG_ERROR,   tag, LOG_FORMAT(E, format), esp_log_timestamp(), tag, ##__VA_ARGS__); }
+#define LOGW( tag, format, ... )  if (LOG_LOCAL_LEVEL >= ESP_LOG_WARN)    { esp_log_write(ESP_LOG_WARN,    tag, LOG_FORMAT(W, format), esp_log_timestamp(), tag, ##__VA_ARGS__); }
+#define LOGI( tag, format, ... )  if (LOG_LOCAL_LEVEL >= ESP_LOG_INFO)    { esp_log_write(ESP_LOG_INFO,    tag, LOG_FORMAT(I, format), esp_log_timestamp(), tag, ##__VA_ARGS__); }
+#define LOGD( tag, format, ... )  if (LOG_LOCAL_LEVEL >= ESP_LOG_DEBUG)   { esp_log_write(ESP_LOG_DEBUG,   tag, LOG_FORMAT(D, format), esp_log_timestamp(), tag, ##__VA_ARGS__); }
+#define LOGV( tag, format, ... )  if (LOG_LOCAL_LEVEL >= ESP_LOG_VERBOSE) { esp_log_write(ESP_LOG_VERBOSE, tag, LOG_FORMAT(V, format), esp_log_timestamp(), tag, ##__VA_ARGS__); }
+
+/* #define LOGE( tag, format, ... )  if (LOG_LOCAL_LEVEL >= ESP_LOG_ERROR)   { printf(format "\n",  ##__VA_ARGS__); }
 #define LOGW( tag, format, ... )  if (LOG_LOCAL_LEVEL >= ESP_LOG_WARN)    { printf(format "\n",  ##__VA_ARGS__); }
 #define LOGI( tag, format, ... )  if (LOG_LOCAL_LEVEL >= ESP_LOG_INFO)    { printf(format "\n",  ##__VA_ARGS__); }
 #define LOGD( tag, format, ... )  if (LOG_LOCAL_LEVEL >= ESP_LOG_DEBUG)   { printf(format "\n",  ##__VA_ARGS__); }
-#define LOGV( tag, format, ... )  if (LOG_LOCAL_LEVEL >= ESP_LOG_VERBOSE) { printf(format "\n",  ##__VA_ARGS__); }
+#define LOGV( tag, format, ... )  if (LOG_LOCAL_LEVEL >= ESP_LOG_VERBOSE) { printf(format "\n",  ##__VA_ARGS__); } */
 #endif
 
 
@@ -73,7 +79,9 @@ public:
   bool _actionInvoked;
   uint32_t _lastInvocationTime;
   Transition(ServerState f, ServerState t):
-    from(f), to(t), _actionInvoked(false), _lastInvocationTime(0){};
+    from(f), to(t), _actionInvoked(false), _lastInvocationTime(0){
+      _lastInvocationTime = millis();
+    };
   bool operator==(Transition& rhs)const {
     return rhs.from == this->from && rhs.to == this->to;
   }
