@@ -24,6 +24,7 @@
 const String mySsid     = "MY_SSID7";
 const String myPassword = "my_password";
 
+bool wifi_connected = false;
 
 #define EXAMPLE_MAX_STA_CONN       CONFIG_MAX_STA_CONN
 
@@ -72,11 +73,13 @@ static esp_err_t event_handler(void *ctx, system_event_t *event)
         printf( "got ip:%s\n",
                  ip4addr_ntoa(&event->event_info.got_ip.ip_info.ip));
         xEventGroupSetBits(wifi_event_group, WIFI_CONNECTED_BIT);
+        wifi_connected = true;
         break;
         case SYSTEM_EVENT_STA_DISCONNECTED:
         printf("WiFi disconnected ");
         esp_wifi_connect();
         xEventGroupClearBits(wifi_event_group, WIFI_CONNECTED_BIT);
+        wifi_connected = false;
         reason = &event->event_info.disconnected.reason;
         printf("Reason: %u - %s\n", reason, reason2str(*reason));
         break;
@@ -97,6 +100,49 @@ static esp_err_t event_handler(void *ctx, system_event_t *event)
         break;
     }
     return ESP_OK;
+}
+
+void serverStartup(){
+  
+  Serial.println("Starting server\n");
+  server.begin();
+  delay(100);
+
+  Serial.println("Setting server timeout\n");
+  //int st1 = server.setTimeout(5);
+  //if (st1 != 0)
+  //  printf("timeout error %d ", st1);
+  delay(1000);
+
+  Serial.println("Waiting for client...");
+
+  WiFiClient client;   // listen for incoming clients
+  //client.setTimeout(10);             // timeout does not seem to work
+  client = server.available();
+
+  if (client) {                             // if client is connected
+    Serial.println("New Client.");           // print a message out the serial port
+    //String currentLine = "";                // make a String to hold incoming data from the client
+    while (client.connected()) {            // loop while the client's connected
+      int st = client.setTimeout(2);             // timeout does not seem to work
+      if (st != 0)
+         printf("%d ", st);
+      //Serial.print(".");
+    //Serial.print("Client connected");
+      if (client.available()) {             // if there's bytes to read from the client,
+        char c = client.read();             // read a byte, then
+        printf("%d",c);                    // print it out the serial monitor
+      }
+    }
+    // close the connection:
+    Serial.println("Closing connection\n");
+    client.stop();
+    delay(100);
+
+    Serial.println("Client Disconnected.");
+  }
+  Serial.println("Ending server.");
+  server.end();
 }
 
 
@@ -173,16 +219,17 @@ void setup()
     printf( "ESP_WIFI_MODE_STA\n");
     wifi_init_sta(mySsid, myPassword, myIP, myGateway, mySubnet);
 
-    vTaskDelay(6000 / portTICK_PERIOD_MS);
+
+    /*
+	vTaskDelay(6000 / portTICK_PERIOD_MS);
     printf("disconnecting...\n");
     esp_wifi_disconnect();
 
     vTaskDelay(6000 / portTICK_PERIOD_MS);
     printf("stopping...\n");
     esp_wifi_stop();
-
+    */
 }
-
 
 void loop()
 {
@@ -190,4 +237,10 @@ void loop()
 
     // gpio_set_level(GPIO_NUM_4, level);
     // level = !level;
+
+    delay(1000);
+    if (wifi_connected) {
+      serverStartup();
+    }
+ 
 }
