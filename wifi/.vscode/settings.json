@@ -2,7 +2,11 @@
   "files.associations": {
     "array": "cpp",
     "initializer_list": "cpp",
-    "functional": "cpp"
+    "functional": "cpp",
+    "deque": "cpp",
+    "unordered_map": "cpp",
+    "unordered_set": "cpp",
+    "vector": "cpp"
   },
   "terminal.integrated.env.windows": {
     "PATH": "C:\\Users\\Gregor\\.platformio\\penv\\Scripts;C:\\Users\\Gregor\\.platformio\\penv;C:\\Users\\Gregor\\.platformio\\python27\\;C:\\Users\\Gregor\\.platformio\\python27\\Scripts;C:\\WINDOWS\\system32;C:\\WINDOWS;C:\\WINDOWS\\System32\\Wbem;C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\;C:\\Program Files\\Intel\\WiFi\\bin\\;C:\\Program Files\\Common Files\\Intel\\WirelessCommon\\;C:\\Program Files\\Git\\cmd;C:\\Program Files\\Git\\mingw64\\bin;C:\\Program Files\\Git\\usr\\bin;C:\\Program Files\\nodejs\\;C:\\ProgramData\\chocolatey\\bin;C:\\Python27;C:\\Program Files\\Java\\jdk1.8.0_152\\bin;C:\\Users\\Gregor\\AppData\\Local\\Android\\Sdk\\platform-tools;C:\\Program Files (x86)\\Windows Kits\\8.1\\Windows Performance Toolkit\\;C:\\Program Files (x86)\\IVI Foundation\\VISA\\WinNT\\Bin\\;C:\\Program Files\\IVI Foundation\\VISA\\Win64\\Bin\\;C:\\Program Files (x86)\\IVI Foundation\\VISA\\WinNT\\Bin;C:\\Program Files\\CMake\\bin;C:\\WINDOWS\\System32\\OpenSSH\\;C:\\Users\\Gregor\\AppData\\Local\\Microsoft\\WindowsApps;C:\\Users\\Gregor\\AppData\\Roaming\\npm;C:\\Program Files\\Microsoft VS Code\\bin;C:\\Program Files (x86)\\Dr. Memory\\bin\\;;C:\\Users\\Gregor\\.platformio\\python27\\;C:\\Users\\Gregor\\.platformio\\python27\\Scripts;C:\\WINDOWS\\system32;C:\\WINDOWS;C:\\WINDOWS\\System32\\Wbem;C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\;C:\\Program Files\\Intel\\WiFi\\bin\\;C:\\Program Files\\Common Files\\Intel\\WirelessCommon\\;C:\\Program Files\\Git\\cmd;C:\\Program Files\\Git\\mingw64\\bin;C:\\Program Files\\Git\\usr\\bin;C:\\Program Files\\nodejs\\;C:\\ProgramData\\chocolatey\\bin;C:\\Python27;C:\\Program Files\\Java\\jdk1.8.0_152\\bin;C:\\Users\\Gregor\\AppData\\Local\\Android\\Sdk\\platform-tools;C:\\Program Files (x86)\\Windows Kits\\8.1\\Windows Performance Toolkit\\;C:\\Program Files (x86)\\IVI Foundation\\VISA\\WinNT\\Bin\\;C:\\Program Files\\IVI Foundation\\VISA\\Win64\\Bin\\;C:\\Program Files (x86)\\IVI Foundation\\VISA\\WinNT\\Bin;C:\\Program Files\\CMake\\bin;C:\\WINDOWS\\System32\\OpenSSH\\;C:\\Users\\Gregor\\AppData\\Local\\Microsoft\\WindowsApps;C:\\Users\\Gregor\\AppData\\Roaming\\npm;C:\\Program Files\\Microsoft VS Code\\bin;C:\\Program Files (x86)\\Dr. Memory\\bin\\;",
