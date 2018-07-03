@@ -222,7 +222,6 @@ void setup()
     printf( "ESP_WIFI_MODE_STA\n");
     wifi_init_sta(mySsid, myPassword, myIP, myGateway, mySubnet);
 
-
     /*
 	vTaskDelay(6000 / portTICK_PERIOD_MS);
     printf("disconnecting...\n");
